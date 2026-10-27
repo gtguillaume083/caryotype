@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Caryotype</title>
+  <meta name="description" content="Reconstituer et analyser un caryotype humain : classement des chromosomes, sexe, anomalies du nombre.">
+  <link rel="icon" href="img/icone.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ============ ACCUEIL ============ -->
+<main id="accueil" class="page">
+  <header class="entete-accueil">
+    <img src="img/icone.svg" alt="" width="56" height="56">
+    <div>
+      <h1>Caryotype</h1>
+      <p>Classe les chromosomes d'une cellule et analyse le caryotype obtenu.</p>
+    </div>
+  </header>
+
+  <section>
+    <h2>1. Choisis ta mission</h2>
+    <div class="cartes" id="choix-activite">
+      <button class="carte" data-activite="classer">
+        <span class="carte-titre">Reconstituer un caryotype</span>
+        <span>Range les chromosomes par paires, du plus grand au plus petit.</span>
+      </button>
+      <button class="carte" data-activite="sexe">
+        <span class="carte-titre">Fille ou garçon ?</span>
+        <span>Classe les chromosomes puis trouve le sexe de la personne.</span>
+      </button>
+      <button class="carte" data-activite="anomalie">
+        <span class="carte-titre">Rechercher une anomalie</span>
+        <span>Compte les chromosomes et repère s'il en manque ou s'il y en a un en trop.</span>
+      </button>
+      <button class="carte" data-activite="complet">
+        <span class="carte-titre">Analyse complète</span>
+        <span>Sexe, anomalie et formule chromosomique (ex. 46,XY).</span>
+      </button>
+    </div>
+  </section>
+
+  <section>
+    <h2>2. Choisis les chromosomes</h2>
+    <div class="bascule" role="radiogroup" aria-label="Type de chromosomes">
+      <label><input type="radio" name="type" value="dessin" checked> Chromosomes dessinés <small>(caryotypes illimités)</small></label>
+      <label><input type="radio" name="type" value="photo"> Photos réelles <small>(vrais caryotypes)</small></label>
+    </div>
+  </section>
+
+  <p class="pied-accueil">
+    <button class="lien" id="ouvrir-prof">Espace enseignant</button> ·
+    <button class="lien" id="ouvrir-credits">Crédits et licences</button>
+  </p>
+</main>
+
+<!-- ============ ACTIVITÉ ============ -->
+<main id="activite" class="page" hidden>
+  <header class="barre">
+    <button class="btn-icone" id="retour" title="Retour à l'accueil" aria-label="Retour à l'accueil">
+      <svg viewBox="0 0 24 24" width="22" height="22"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <div class="titre-activite">
+      <h1 id="titre-activite">Reconstituer un caryotype</h1>
+      <span id="code-cas" class="code"></span>
+    </div>
+    <label class="eleve">Nom : <input id="nom-eleve" type="text" autocomplete="off" placeholder="Prénom Nom, classe"></label>
+    <div class="outils">
+      <button id="zoom-moins" class="btn-icone" title="Rapetisser" aria-label="Rapetisser">−</button>
+      <button id="zoom-plus" class="btn-icone" title="Agrandir" aria-label="Agrandir">+</button>
+      <button id="btn-aide" class="btn">Aide</button>
+      <button id="btn-imprimer" class="btn">Imprimer</button>
+    </div>
+  </header>
+
+  <p class="consigne" id="consigne"></p>
+
+  <div class="espace">
+    <section class="panneau" id="panneau-lame">
+      <h2>Lame du microscope <span class="compteur" id="compteur-lame"></span></h2>
+      <div id="lame" aria-label="Chromosomes à classer"></div>
+      <p class="astuce">Glisse un chromosome vers sa case. Double-clic (ou double toucher) : le retourner.</p>
+    </section>
+
+    <section class="panneau" id="panneau-caryo">
+      <h2>Caryogramme</h2>
+      <div id="caryogramme"></div>
+    </section>
+  </div>
+
+  <section class="panneau" id="questions" hidden></section>
+
+  <div class="actions">
+    <button id="btn-verifier" class="btn btn-principal">Vérifier</button>
+    <button id="btn-solution" class="btn" hidden>Voir la solution</button>
+    <button id="btn-nouveau" class="btn">Nouveau caryotype</button>
+  </div>
+  <div id="bilan" class="bilan" role="status" aria-live="polite" hidden></div>
+</main>
+
+<!-- ============ AIDE ============ -->
+<dialog id="dlg-aide">
+  <form method="dialog" class="dlg">
+    <h2>Comment reconnaître les chromosomes ?</h2>
+    <ul>
+      <li><b>La taille</b> : les chromosomes sont numérotés du plus grand (1) au plus petit (21 et 22 ; le 21 est même un peu plus petit que le 22).</li>
+      <li><b>Le centromère</b> : l'étranglement du chromosome. Il est au milieu (1, 3, 16, 19, 20), décalé (la plupart) ou tout en haut (13, 14, 15, 21, 22).</li>
+      <li><b>Les bandes</b> : chaque paire a son propre « code-barres » de bandes claires et sombres. Les deux chromosomes d'une même paire ont les mêmes bandes.</li>
+      <li><b>Les chromosomes sexuels</b> : X est un chromosome moyen (taille entre le 7 et le 8). Y est petit, de la taille des chromosomes 19 à 22.</li>
+    </ul>
+    <h3>Les modèles</h3>
+    <div id="planche"></div>
+    <p class="note">Dans un caryogramme, on place le bras court (au-dessus du centromère) en haut.</p>
+    <div class="dlg-actions"><button class="btn btn-principal">Fermer</button></div>
+  </form>
+</dialog>
+
+<!-- ============ ESPACE ENSEIGNANT ============ -->
+<dialog id="dlg-prof">
+  <form method="dialog" class="dlg" id="form-prof">
+    <h2>Espace enseignant</h2>
+    <p class="note">Préparez une activité puis copiez le lien (ENT, Pronote, QR code…). Les élèves n'ont aucun compte à créer et rien n'est enregistré en ligne.</p>
+
+    <fieldset>
+      <legend>Mission</legend>
+      <select id="prof-activite">
+        <option value="classer">Reconstituer un caryotype</option>
+        <option value="sexe">Fille ou garçon ?</option>
+        <option value="anomalie">Rechercher une anomalie</option>
+        <option value="complet">Analyse complète (avec formule)</option>
+      </select>
+    </fieldset>
+
+    <fieldset>
+      <legend>Caryotypes possibles <small>(un est tiré au hasard pour chaque élève)</small></legend>
+      <div id="prof-cas" class="liste-cas"></div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Options</legend>
+      <label><input type="checkbox" id="prof-modeles" checked> Afficher les modèles dans les cases (aide)</label>
+      <label><input type="checkbox" id="prof-rotation" checked> Chromosomes tournés dans tous les sens sur la lame</label>
+      <label><input type="checkbox" id="prof-solution" checked> Autoriser « Voir la solution » après une vérification</label>
+    </fieldset>
+
+    <label class="champ-lien">Lien à donner aux élèves
+      <input id="prof-lien" type="text" readonly>
+    </label>
+    <div class="dlg-actions">
+      <button type="button" class="btn" id="prof-copier">Copier le lien</button>
+      <button type="button" class="btn" id="prof-tester">Tester</button>
+    </div>
+
+    <fieldset>
+      <legend>Corriger le travail d'un élève</legend>
+      <p class="note">Chaque caryotype a un code (affiché en haut de l'écran de l'élève et sur sa feuille imprimée).</p>
+      <div class="ligne">
+        <input id="prof-code" type="text" placeholder="Code, ex. D7K2Q" autocomplete="off">
+        <button type="button" class="btn" id="prof-corriger">Ouvrir avec la solution</button>
+      </div>
+    </fieldset>
+
+    <div class="dlg-actions"><button class="btn btn-principal">Fermer</button></div>
+  </form>
+</dialog>
+
+<!-- ============ CRÉDITS ============ -->
+<dialog id="dlg-credits">
+  <form method="dialog" class="dlg">
+    <h2>Crédits et licences</h2>
+    <p>Application libre réalisée pour l'enseignement des SVT au collège.</p>
+    <ul>
+      <li><b>Bandes chromosomiques</b> des chromosomes dessinés : UCSC Genome Browser, assemblage GRCh38/hg38 (fichier cytoBand), domaine public.</li>
+      <li><b>Photos de caryotypes</b> (Wikimedia Commons), chromosomes découpés et détourés :
+        <ul id="liste-credits"></ul>
+      </li>
+      <li>Le caryotype photo « 46,XX » est un montage pédagogique : deux chromosomes X ont été retirés d'un caryotype 48,XXXX.</li>
+    </ul>
+    <div class="dlg-actions"><button class="btn btn-principal">Fermer</button></div>
+  </form>
+</dialog>
+
+<script src="js/bandes.js"></script>
+<script src="donnees/chromosomes.js"></script>
+<script src="js/chromosome.js"></script>
+<script src="js/cas.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

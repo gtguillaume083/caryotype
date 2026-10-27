@@ -8,6 +8,7 @@
 stages:
 - test
 - secret-detection
+- deploy
 sast:
   stage: test
 include:
@@ -17,3 +18,16 @@ variables:
   SECRET_DETECTION_ENABLED: 'true'
 secret_detection:
   stage: secret-detection
+
+# Publication automatique de l'application avec GitLab Pages
+pages:
+  stage: deploy
+  image: alpine:latest
+  script:
+    - mkdir -p public
+    - cp -r app/* public/
+  artifacts:
+    paths:
+      - public
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH

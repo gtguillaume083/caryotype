@@ -22,12 +22,27 @@ body.parcours { font-size: 17px; }
 #sommaire a.fait .s-num { background: var(--juste); color: #fff; }
 #sommaire a.actif .s-num { background: #fff; color: var(--primaire); }
 
+.p-menu, .s-atelier, .p-voile { display: none; }
 @media (max-width: 900px) {
   .p-corps { grid-template-columns: minmax(0, 1fr); gap: 10px; padding-top: 10px; }
-  #sommaire ol { position: static; flex-direction: row; overflow-x: auto; padding-bottom: 6px; gap: 6px; }
-  #sommaire li { flex: 0 0 auto; }
-  #sommaire a { white-space: nowrap; border: 1px solid var(--bordure); background: var(--surface); }
-  .p-liens { width: 100%; }
+  .p-entete { gap: 8px 12px; padding: 8px 12px; }
+  .p-menu { display: inline-flex; font-weight: 700; }
+  .p-liens, .p-progression span { display: none; }
+  .p-progression { flex: 1 1 60px; }
+  .s-atelier { display: block; margin-top: 8px; border-top: 1px solid var(--bordure); padding-top: 8px; }
+  #sommaire { position: fixed; z-index: 70; top: 0; left: 0; bottom: 0; width: min(330px, 86vw); overflow-y: auto;
+    background: var(--surface); padding: 14px 10px; box-shadow: 4px 0 24px rgb(0 0 0 / 20%);
+    transform: translateX(-105%); transition: transform .25s ease; visibility: hidden; }
+  #sommaire ol { position: static; }
+  .menu-ouvert #sommaire { transform: none; visibility: visible; }
+  .menu-ouvert .p-voile { display: block; position: fixed; inset: 0; z-index: 65; background: rgb(0 0 0 / 35%); }
+}
+@media (max-width: 520px) {
+  .p-entete { flex-wrap: nowrap; }
+  .p-marque span { display: none; }
+  .p-marque img { width: 30px; height: 30px; }
+  .allele-choix span { flex-basis: 100%; text-align: center; }
+  .allele-fleche { display: none; }
 }
 
 /* ---------- chapitre ---------- */
@@ -111,7 +126,7 @@ body.parcours { font-size: 17px; }
 .allele-cellule { margin: 0; text-align: center; }
 .allele-cellule figcaption { font-size: .85rem; color: #555; margin-top: 6px; }
 .noyau-allele { display: flex; gap: 44px; justify-content: center; padding: 44px 62px 52px; background: #efe6f8; border: 3px solid #8e6bb8; border-radius: 50%; }
-@media (max-width: 520px) { .noyau-allele { padding: 34px 26px 42px; gap: 22px; } .allele-fleche { transform: rotate(90deg); } }
+@media (max-width: 520px) { .noyau-allele { padding: 34px 26px 42px; gap: 22px; } }
 .allele-col { display: flex; flex-direction: column; align-items: center; gap: 6px; }
 .allele-titre { text-align: center; font-weight: 700; font-size: .9rem; white-space: nowrap; }
 .allele-chromo { position: relative; display: flex; justify-content: center; width: 90px; }
@@ -119,7 +134,7 @@ body.parcours { font-size: 17px; }
 .locus { position: absolute; left: 50%; width: 24px; height: 5px; margin-left: -12px; margin-top: -2px; background: #f4c430; border-radius: 2px; box-shadow: 0 0 0 1px #9a7a00; }
 .locus-etiquette { position: absolute; left: calc(50% + 15px); transform: translateY(-50%); white-space: nowrap; font-size: .8rem; background: #fff8dd; border: 1px solid #e0c060; border-radius: 6px; padding: 1px 6px; }
 .allele-fleche { font-size: 2rem; color: #888; }
-.allele-commandes { display: flex; flex-wrap: wrap; gap: 10px 24px; justify-content: center; margin-top: 12px; }
+.allele-commandes { display: flex; flex-direction: column; gap: 8px; align-items: center; margin-top: 10px; }
 .allele-choix { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; justify-content: center; }
 .allele-choix span { font-weight: 700; font-size: .9rem; }
 .allele-choix .btn { min-width: 46px; font-weight: 700; font-size: 1.1rem; }

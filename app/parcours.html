@@ -6,12 +6,13 @@
   <title>Comprendre la génétique</title>
   <meta name="description" content="Parcours guidé de génétique (SVT, cycle 4) : ADN, chromosomes, caryotype, gènes et allèles, mutations, mitose, méiose, fécondation, trisomie 21, trace écrite.">
   <link rel="icon" href="img/icone.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="css/style.css?v=7">
-  <link rel="stylesheet" href="css/parcours.css?v=7">
+  <link rel="stylesheet" href="css/style.css?v=8">
+  <link rel="stylesheet" href="css/parcours.css?v=8">
 </head>
 <body class="parcours">
 
 <header class="p-entete">
+  <button class="btn p-menu" id="p-menu" aria-expanded="false" aria-controls="sommaire">☰ Chapitres</button>
   <a class="p-marque" href="index.html" title="Accueil">
     <img src="img/icone.svg" alt="" width="36" height="36">
     <span>Comprendre la génétique</span>
@@ -28,11 +29,12 @@
 
 <div class="p-corps">
   <nav id="sommaire" aria-label="Chapitres"></nav>
+  <div class="p-voile" id="p-voile"></div>
   <main id="chapitre" tabindex="-1"></main>
 </div>
 
-<script src="js/bandes.js?v=7"></script>
-<script src="js/chromosome.js?v=7"></script>
-<script src="js/parcours.js?v=7"></script>
+<script src="js/bandes.js?v=8"></script>
+<script src="js/chromosome.js?v=8"></script>
+<script src="js/parcours.js?v=8"></script>
 </body>
 </html>

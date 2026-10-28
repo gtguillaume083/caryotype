@@ -371,14 +371,14 @@
             <div class="allele-col" data-i="1"></div>
           </div>
           <figcaption>Noyau d'une cellule : la paire de chromosomes 9.<br><small>(Les 44 autres chromosomes ne sont pas représentés.)</small></figcaption>
+          <div class="allele-commandes">
+            ${[0, 1].map((i) => `<div class="allele-choix" role="group" aria-label="Allèle sur le chromosome 9 venu ${i === 0 ? "de la mère" : "du père"}" data-i="${i}">
+              <span style="color:${i === 0 ? COULEUR_MERE : COULEUR_PERE}">Allèle venu ${i === 0 ? "de la mère" : "du père"} :</span>
+              ${["A", "B", "O"].map((a) => `<button class="btn" data-a="${a}">${a}</button>`).join("")}</div>`).join("")}
+          </div>
         </figure>
         <div class="allele-fleche" aria-hidden="true">→</div>
         <div class="allele-resultat" aria-live="polite"></div>
-      </div>
-      <div class="allele-commandes">
-        ${[0, 1].map((i) => `<div class="allele-choix" role="group" aria-label="Allèle sur le chromosome 9 venu ${i === 0 ? "de la mère" : "du père"}" data-i="${i}">
-          <span style="color:${i === 0 ? COULEUR_MERE : COULEUR_PERE}">Allèle sur le chromosome venu ${i === 0 ? "de la mère" : "du père"} :</span>
-          ${["A", "B", "O"].map((a) => `<button class="btn" data-a="${a}">${a}</button>`).join("")}</div>`).join("")}
       </div>`;
 
     function colonne(i) {
@@ -1391,7 +1391,8 @@
     $("#sommaire").innerHTML = `<ol>
       <li><a href="#accueil" class="${actif === "accueil" ? "actif" : ""}">Accueil du parcours</a></li>
       ${CHAPITRES.map((c, i) => `<li><a href="#${c.id}" class="${actif === c.id ? "actif" : ""}${progres[c.id] ? " fait" : ""}"><span class="s-num">${progres[c.id] ? "✓" : i + 1}</span>${c.titre}</a></li>`).join("")}
-      <li><a href="#trace" class="${actif === "trace" ? "actif" : ""}"><span class="s-num">★</span>La trace écrite</a></li></ol>`;
+      <li><a href="#trace" class="${actif === "trace" ? "actif" : ""}"><span class="s-num">★</span>La trace écrite</a></li>
+      <li class="s-atelier"><a href="index.html"><span class="s-num">⌗</span>Atelier caryotype</a></li></ol>`;
     const n = CHAPITRES.filter((c) => progres[c.id]).length;
     $("#p-barre-remplie").style.width = (100 * n) / CHAPITRES.length + "%";
     $("#p-progression-texte").textContent = `${n} / ${CHAPITRES.length} chapitres réussis`;
@@ -1408,6 +1409,16 @@
     window.scrollTo(0, 0);
     main.focus({ preventScroll: true });
   }
+
+  // écran étroit : le sommaire devient un menu qui s'ouvre par le bouton « Chapitres »
+  function menu(ouvert) {
+    document.body.classList.toggle("menu-ouvert", ouvert);
+    $("#p-menu").setAttribute("aria-expanded", ouvert);
+  }
+  $("#p-menu").addEventListener("click", () => menu(!document.body.classList.contains("menu-ouvert")));
+  $("#p-voile").addEventListener("click", () => menu(false));
+  $("#sommaire").addEventListener("click", (e) => { if (e.target.closest("a")) menu(false); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") menu(false); });
 
   window.addEventListener("hashchange", router);
   router();

@@ -6,7 +6,7 @@
   <title>Caryotype</title>
   <meta name="description" content="Reconstituer et analyser un caryotype humain : classement des chromosomes, chromosomes sexuels, anomalies du nombre.">
   <link rel="icon" href="img/icone.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="css/style.css?v=4">
+  <link rel="stylesheet" href="css/style.css?v=5">
 </head>
 <body>
 
@@ -110,6 +110,11 @@
     <button id="btn-solution" class="btn" hidden>Voir la solution</button>
     <button id="btn-nouveau" class="btn">Nouveau caryotype</button>
   </div>
+  <div id="rendu" class="rendu" hidden>
+    <p><b>Quand tu as fini</b> : copie ton code de rendu et colle-le là où ton professeur te l'a demandé (devoir Pronote, ENT…).</p>
+    <button id="btn-rendu" class="btn btn-principal">Copier mon code de rendu</button>
+    <textarea id="rendu-code" rows="3" readonly hidden aria-label="Mon code de rendu"></textarea>
+  </div>
   <div id="bilan" class="bilan" role="status" aria-live="polite" hidden></div>
 
   <aside id="loupe" aria-hidden="true" hidden>
@@ -189,7 +194,18 @@
     </fieldset>
 
     <fieldset>
-      <legend>Après la séance : corriger le travail d'un élève</legend>
+      <legend>Après la séance : lire les codes de rendu</legend>
+      <p class="note">Chaque élève copie son « code de rendu » (bouton en bas de son activité) et vous l'envoie. Collez ici un ou plusieurs codes, tels quels, même mélangés à d'autre texte : le score est recalculé à partir du travail de l'élève. « Voir » ouvre son caryotype tel qu'il l'a rendu. Un code modifié à la main est refusé.</p>
+      <textarea id="prof-rendus" rows="4" placeholder="R1.xxxxxxxx…" spellcheck="false"></textarea>
+      <div class="dlg-actions">
+        <button type="button" class="btn" id="prof-copier-tableau" hidden>Copier le tableau (tableur)</button>
+        <button type="button" class="btn btn-principal" id="prof-lire">Lire les codes</button>
+      </div>
+      <div id="prof-tableau"></div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Ouvrir la solution d'un caryotype</legend>
       <p class="note">Chaque caryotype tiré depuis votre lien a un code (en haut de l'écran de l'élève et sur sa feuille imprimée). La solution s'ouvre avec ce code et votre clé de correction ci-dessus.</p>
       <div class="ligne">
         <input id="prof-code" type="text" placeholder="Code, ex. D7K2Q-4F" autocomplete="off">
@@ -217,10 +233,10 @@
   </form>
 </dialog>
 
-<script src="js/bandes.js?v=4"></script>
-<script src="donnees/chromosomes.js?v=4"></script>
-<script src="js/chromosome.js?v=4"></script>
-<script src="js/cas.js?v=4"></script>
-<script src="js/app.js?v=4"></script>
+<script src="js/bandes.js?v=5"></script>
+<script src="donnees/chromosomes.js?v=5"></script>
+<script src="js/chromosome.js?v=5"></script>
+<script src="js/cas.js?v=5"></script>
+<script src="js/app.js?v=5"></script>
 </body>
 </html>

@@ -180,6 +180,14 @@ small { color: var(--texte-doux); }
 .actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 14px 0; }
 .bilan { background: var(--surface); border: 1px solid var(--bordure); border-left: 5px solid #e0a020; border-radius: 8px; padding: 6px 14px; }
 .bilan p { margin: 8px 0; }
+.rendu { margin: 14px 0; padding: 10px 14px; background: var(--primaire-clair); border-radius: 8px; display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+.rendu p { margin: 0; }
+.rendu textarea, #prof-rendus { width: 100%; font: .85rem ui-monospace, monospace; padding: 6px 8px; border: 1px solid var(--bordure); border-radius: 6px; word-break: break-all; }
+.tableau-defile { overflow-x: auto; }
+.tableau-rendus { border-collapse: collapse; width: 100%; font-size: .9rem; }
+.tableau-rendus th, .tableau-rendus td { border-bottom: 1px solid var(--bordure); padding: 5px 6px; text-align: left; vertical-align: top; }
+.rendu-justif td { color: var(--texte-doux); font-size: .85rem; border-bottom-width: 2px; }
+.rendu-erreur td { color: var(--faux); }
 .bilan-ok { border-left-color: var(--juste); }
 .bilan-solution { border-left-color: var(--primaire); }
 .bilan .ok { color: var(--juste); font-weight: 600; }

@@ -67,6 +67,13 @@ small { color: var(--texte-doux); }
 }
 .bascule label:has(input:checked) { border-color: var(--primaire); background: var(--primaire-clair); }
 .pied-accueil { color: var(--texte-doux); }
+.bandeau-prof { display: flex; align-items: center; gap: 12px 16px; flex-wrap: wrap; justify-content: space-between;
+  background: #fff7e6; border: 1px solid #f0c674; border-radius: var(--rayon); padding: 10px 14px; margin: -12px 0 18px; }
+.bandeau-prof p { margin: 0; flex: 1 1 320px; }
+.mode-eleve .partie-prof { display: none !important; }
+.guide-prof { margin: 0 0 6px; padding-left: 22px; display: flex; flex-direction: column; gap: 4px; }
+.encadre-lien { border-color: var(--primaire) !important; background: var(--primaire-clair); }
+.encadre-lien input { width: 100%; }
 .carte-parcours {
   display: flex; flex-direction: column; gap: 6px; text-decoration: none;
   background: linear-gradient(135deg, #1d5f8a, #3b7fae); color: #fff;

@@ -6,7 +6,7 @@
   <title>Caryotype</title>
   <meta name="description" content="Reconstituer et analyser un caryotype humain : classement des chromosomes, chromosomes sexuels, anomalies du nombre.">
   <link rel="icon" href="img/icone.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="css/style.css?v=3">
+  <link rel="stylesheet" href="css/style.css?v=4">
 </head>
 <body>
 
@@ -19,6 +19,11 @@
       <p>Classe les chromosomes d'une cellule et analyse le caryotype obtenu.</p>
     </div>
   </header>
+
+  <div class="bandeau-prof partie-prof">
+    <p><b>Vous êtes enseignant ?</b> Préparez une séance en quelques clics : vous obtenez un lien à donner à vos élèves, puis vous corrigez leur travail avec votre clé.</p>
+    <button class="btn btn-principal" id="ouvrir-prof-haut">Préparer une séance →</button>
+  </div>
 
   <a class="carte-parcours" href="parcours.html">
     <span class="cp-titre">Comprendre la génétique</span>
@@ -58,7 +63,7 @@
   </section>
 
   <p class="pied-accueil">
-    <button class="lien" id="ouvrir-prof">Espace enseignant</button> ·
+    <span class="partie-prof"><button class="lien" id="ouvrir-prof">Espace enseignant</button> ·</span>
     <button class="lien" id="ouvrir-credits">Crédits et licences</button>
   </p>
 </main>
@@ -133,11 +138,15 @@
 <!-- ============ ESPACE ENSEIGNANT ============ -->
 <dialog id="dlg-prof">
   <form method="dialog" class="dlg" id="form-prof">
-    <h2>Espace enseignant</h2>
-    <p class="note">Préparez une activité puis copiez le lien (ENT, Pronote, QR code…). Les élèves n'ont aucun compte à créer et rien n'est enregistré en ligne.</p>
+    <h2>Préparer une séance</h2>
+    <ol class="guide-prof">
+      <li><b>Réglez</b> l'activité (étapes 1 à 4 ci-dessous), puis copiez le lien (étape 5).</li>
+      <li><b>Donnez le lien</b> aux élèves (ENT, Pronote, QR code…). Ils arrivent directement sur l'activité, sans espace enseignant, sans compte à créer. Rien n'est enregistré en ligne.</li>
+      <li><b>Corrigez</b> : chaque élève a un code de caryotype (en haut de son écran et sur sa feuille imprimée). Avec ce code et votre clé, vous ouvrez sa solution (en bas de cette fenêtre).</li>
+    </ol>
 
     <fieldset>
-      <legend>Mission</legend>
+      <legend>1. La mission</legend>
       <select id="prof-activite">
         <option value="classer">Reconstituer un caryotype</option>
         <option value="sexe">Les chromosomes sexuels (X et Y)</option>
@@ -147,33 +156,40 @@
     </fieldset>
 
     <fieldset>
-      <legend>Caryotypes possibles <small>(un est tiré au hasard pour chaque élève)</small></legend>
+      <legend>2. Les caryotypes possibles <small>(un est tiré au hasard pour chaque élève)</small></legend>
+      <div class="ligne">
+        <button type="button" class="btn" id="prof-essentiels">Les essentiels : 46,XX · 46,XY · trisomie 21</button>
+        <button type="button" class="btn" id="prof-tout">Tout cocher</button>
+        <button type="button" class="btn" id="prof-rien">Tout décocher</button>
+      </div>
       <div id="prof-cas" class="liste-cas"></div>
     </fieldset>
 
     <fieldset>
-      <legend>Options</legend>
+      <legend>3. Les options</legend>
       <label><input type="checkbox" id="prof-modeles" checked> Afficher les modèles dans les cases (aide)</label>
       <label><input type="checkbox" id="prof-rotation" checked> Chromosomes tournés dans tous les sens sur la lame</label>
       <label><input type="checkbox" id="prof-solution" checked> Autoriser « Voir la solution » après une vérification</label>
     </fieldset>
 
     <fieldset>
-      <legend>Clé de correction</legend>
+      <legend>4. Votre clé de correction</legend>
       <p class="note">Elle vous permettra d'ouvrir la solution du caryotype de chaque élève. Notez-la : elle n'est pas dans le lien donné aux élèves, qui ne peuvent donc pas l'utiliser. Gardez la même pour toutes vos classes.</p>
       <input id="prof-cle" type="text" autocomplete="off" spellcheck="false" aria-label="Clé de correction">
     </fieldset>
 
-    <label class="champ-lien">Lien à donner aux élèves
-      <input id="prof-lien" type="text" readonly>
-    </label>
-    <div class="dlg-actions">
-      <button type="button" class="btn" id="prof-copier">Copier le lien</button>
-      <button type="button" class="btn" id="prof-tester">Tester</button>
-    </div>
+    <fieldset class="encadre-lien">
+      <legend>5. Le lien à donner aux élèves</legend>
+      <input id="prof-lien" type="text" readonly aria-label="Lien à donner aux élèves">
+      <div class="dlg-actions">
+        <button type="button" class="btn" id="prof-tester">Tester comme un élève</button>
+        <button type="button" class="btn btn-principal" id="prof-copier">Copier le lien</button>
+      </div>
+      <p class="note">Pour le parcours guidé « Comprendre la génétique », donnez simplement l'adresse <a href="parcours.html" id="prof-lien-parcours">parcours.html</a>.</p>
+    </fieldset>
 
     <fieldset>
-      <legend>Corriger le travail d'un élève</legend>
+      <legend>Après la séance : corriger le travail d'un élève</legend>
       <p class="note">Chaque caryotype tiré depuis votre lien a un code (en haut de l'écran de l'élève et sur sa feuille imprimée). La solution s'ouvre avec ce code et votre clé de correction ci-dessus.</p>
       <div class="ligne">
         <input id="prof-code" type="text" placeholder="Code, ex. D7K2Q-4F" autocomplete="off">
@@ -201,10 +217,10 @@
   </form>
 </dialog>
 
-<script src="js/bandes.js?v=3"></script>
-<script src="donnees/chromosomes.js?v=3"></script>
-<script src="js/chromosome.js?v=3"></script>
-<script src="js/cas.js?v=3"></script>
-<script src="js/app.js?v=3"></script>
+<script src="js/bandes.js?v=4"></script>
+<script src="donnees/chromosomes.js?v=4"></script>
+<script src="js/chromosome.js?v=4"></script>
+<script src="js/cas.js?v=4"></script>
+<script src="js/app.js?v=4"></script>
 </body>
 </html>

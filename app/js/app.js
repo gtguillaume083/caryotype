@@ -788,7 +788,18 @@
     $("#zoom-moins").addEventListener("click", () => { zoom = Math.max(0.5, +(zoom - 0.1).toFixed(2)); memoire.ecrire("zoom", zoom); appliquerZoom(); });
     $("#nom-eleve").addEventListener("input", sauver);
 
-    $("#ouvrir-prof").addEventListener("click", () => { construireProf(); $("#dlg-prof").showModal(); });
+    const ouvrirProf = () => { construireProf(); $("#dlg-prof").showModal(); };
+    $("#ouvrir-prof").addEventListener("click", ouvrirProf);
+    $("#ouvrir-prof-haut").addEventListener("click", ouvrirProf);
+    const cocher = (filtre) => {
+      document.querySelectorAll("#prof-cas input").forEach((i) => { i.checked = filtre(i.value); });
+      majLienProf();
+    };
+    $("#prof-essentiels").addEventListener("click", () => cocher((id) => ["xx", "xy", "t21f", "t21m"].includes(id)));
+    $("#prof-tout").addEventListener("click", () => cocher(() => true));
+    $("#prof-rien").addEventListener("click", () => cocher(() => false));
+    $("#prof-lien-parcours").href = new URL("parcours.html", location.href).href;
+    $("#prof-lien-parcours").textContent = $("#prof-lien-parcours").href;
     $("#form-prof").addEventListener("change", majLienProf);
     $("#prof-copier").addEventListener("click", async () => {
       majLienProf();
@@ -840,6 +851,13 @@
       lien.hidden = false;
     }
     const conf = params.get("p") && decoder(params.get("p"));
+    // élève envoyé par son enseignant (lien marqué, sans clé) : pas d'espace enseignant
+    if (conf && conf.m && !params.get("cle")) {
+      try { sessionStorage.setItem("caryotype.eleve", "1"); } catch (e) { /* stockage indisponible */ }
+    }
+    let eleve = false;
+    try { eleve = sessionStorage.getItem("caryotype.eleve") === "1"; } catch (e) { /* stockage indisponible */ }
+    document.body.classList.toggle("mode-eleve", eleve);
     if (conf && Array.isArray(conf.cas) && ACTIVITES[conf.activite]) {
       demarrer(conf, params.get("code"), params.get("cle"));
     }

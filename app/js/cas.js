@@ -20,7 +20,7 @@
     return liste;
   }
 
-  /* Écarts par rapport à un caryotype normal du même sexe :
+  /* Écarts par rapport à un caryotype normal (46,XX s'il n'y a pas de Y, 46,XY sinon) :
    * [{ c: "21", delta: +1 }, ...] */
   function anomalies(liste) {
     const n = {};
@@ -38,8 +38,14 @@
     return res;
   }
 
-  function sexe(liste) {
-    return liste.includes("Y") ? "garcon" : "fille";
+  // on parle de chromosomes sexuels (sexe génétique), jamais de « fille » ou « garçon »
+  function nombreXY(liste) {
+    return { x: liste.filter((c) => c === "X").length, y: liste.filter((c) => c === "Y").length };
+  }
+
+  function chromosomesSexuels(liste) {
+    const { x, y } = nombreXY(liste);
+    return "X".repeat(x) + "Y".repeat(y);
   }
 
   /* Nom de l'anomalie, pour la correction */
@@ -48,18 +54,18 @@
     if (!an.length) return "Caryotype normal";
     if (an.length > 1) return "Plusieurs anomalies du nombre de chromosomes";
     const { c, delta } = an[0];
-    const garcon = liste.includes("Y");
+    const avecY = liste.includes("Y");
     const noms = {
       "21+1": "Trisomie 21 (syndrome de Down)",
       "18+1": "Trisomie 18 (syndrome d'Edwards)",
       "13+1": "Trisomie 13 (syndrome de Patau)",
       "X-1": "Monosomie X (syndrome de Turner)",
-      "Y+1": "Garçon XYY (syndrome de Jacobs)",
+      "Y+1": "Chromosome Y supplémentaire (47,XYY)",
     };
     const cle = c + (delta > 0 ? "+" : "") + delta;
     if (noms[cle]) return noms[cle];
-    if (c === "X" && delta === 1) return garcon ? "Syndrome de Klinefelter (XXY)" : "Trisomie X (triple X)";
-    if (c === "X" && delta === 2 && !garcon) return "Tétrasomie X (48,XXXX)";
+    if (c === "X" && delta === 1) return avecY ? "Syndrome de Klinefelter (XXY)" : "Trisomie X (XXX)";
+    if (c === "X" && delta === 2 && !avecY) return "Tétrasomie X (48,XXXX)";
     if (delta === 1) return `Trisomie ${c}`;
     if (delta === -1) return `Monosomie ${c}`;
     return `Chromosome ${c} présent en ${2 + delta} exemplaires`;
@@ -104,7 +110,7 @@
 
   window.Cas = {
     LISTE, CLASSES, CREDITS,
-    classesDepuisFormule, anomalies, sexe, nomAnomalie, normaliserFormule,
+    classesDepuisFormule, anomalies, nombreXY, chromosomesSexuels, nomAnomalie, normaliserFormule,
     parId: (id) => LISTE.find((c) => c.id === id),
   };
 })();

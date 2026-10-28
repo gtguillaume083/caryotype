@@ -4,9 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Caryotype</title>
-  <meta name="description" content="Reconstituer et analyser un caryotype humain : classement des chromosomes, sexe, anomalies du nombre.">
+  <meta name="description" content="Reconstituer et analyser un caryotype humain : classement des chromosomes, chromosomes sexuels, anomalies du nombre.">
   <link rel="icon" href="img/icone.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/style.css?v=2">
 </head>
 <body>
 
@@ -28,8 +28,8 @@
         <span>Range les chromosomes par paires, du plus grand au plus petit.</span>
       </button>
       <button class="carte" data-activite="sexe">
-        <span class="carte-titre">Fille ou garçon ?</span>
-        <span>Classe les chromosomes puis trouve le sexe de la personne.</span>
+        <span class="carte-titre">Les chromosomes sexuels</span>
+        <span>Classe les chromosomes puis compte les chromosomes X et Y.</span>
       </button>
       <button class="carte" data-activite="anomalie">
         <span class="carte-titre">Rechercher une anomalie</span>
@@ -37,7 +37,7 @@
       </button>
       <button class="carte" data-activite="complet">
         <span class="carte-titre">Analyse complète</span>
-        <span>Sexe, anomalie et formule chromosomique (ex. 46,XY).</span>
+        <span>Chromosomes sexuels, anomalie et formule chromosomique (ex. 46,XY).</span>
       </button>
     </div>
   </section>
@@ -81,7 +81,7 @@
     <section class="panneau" id="panneau-lame">
       <h2>Lame du microscope <span class="compteur" id="compteur-lame"></span></h2>
       <div id="lame" aria-label="Chromosomes à classer"></div>
-      <p class="astuce">Glisse un chromosome vers sa case. Double-clic (ou double toucher) : le retourner.</p>
+      <p class="astuce">Glisse un chromosome vers sa case, ou touche-le puis touche sa case. Un toucher l'affiche en grand dans la loupe ; double toucher (ou double-clic) : le retourner.</p>
     </section>
 
     <section class="panneau" id="panneau-caryo">
@@ -98,6 +98,11 @@
     <button id="btn-nouveau" class="btn">Nouveau caryotype</button>
   </div>
   <div id="bilan" class="bilan" role="status" aria-live="polite" hidden></div>
+
+  <aside id="loupe" aria-hidden="true" hidden>
+    <span class="loupe-titre">Loupe</span>
+    <img alt="">
+  </aside>
 </main>
 
 <!-- ============ AIDE ============ -->
@@ -127,7 +132,7 @@
       <legend>Mission</legend>
       <select id="prof-activite">
         <option value="classer">Reconstituer un caryotype</option>
-        <option value="sexe">Fille ou garçon ?</option>
+        <option value="sexe">Les chromosomes sexuels (X et Y)</option>
         <option value="anomalie">Rechercher une anomalie</option>
         <option value="complet">Analyse complète (avec formule)</option>
       </select>
@@ -145,6 +150,12 @@
       <label><input type="checkbox" id="prof-solution" checked> Autoriser « Voir la solution » après une vérification</label>
     </fieldset>
 
+    <fieldset>
+      <legend>Clé de correction</legend>
+      <p class="note">Elle vous permettra d'ouvrir la solution du caryotype de chaque élève. Notez-la : elle n'est pas dans le lien donné aux élèves, qui ne peuvent donc pas l'utiliser. Gardez la même pour toutes vos classes.</p>
+      <input id="prof-cle" type="text" autocomplete="off" spellcheck="false" aria-label="Clé de correction">
+    </fieldset>
+
     <label class="champ-lien">Lien à donner aux élèves
       <input id="prof-lien" type="text" readonly>
     </label>
@@ -155,9 +166,9 @@
 
     <fieldset>
       <legend>Corriger le travail d'un élève</legend>
-      <p class="note">Chaque caryotype a un code (affiché en haut de l'écran de l'élève et sur sa feuille imprimée).</p>
+      <p class="note">Chaque caryotype tiré depuis votre lien a un code (en haut de l'écran de l'élève et sur sa feuille imprimée). La solution s'ouvre avec ce code et votre clé de correction ci-dessus.</p>
       <div class="ligne">
-        <input id="prof-code" type="text" placeholder="Code, ex. D7K2Q" autocomplete="off">
+        <input id="prof-code" type="text" placeholder="Code, ex. D7K2Q-4F" autocomplete="off">
         <button type="button" class="btn" id="prof-corriger">Ouvrir avec la solution</button>
       </div>
     </fieldset>
@@ -182,10 +193,10 @@
   </form>
 </dialog>
 
-<script src="js/bandes.js"></script>
-<script src="donnees/chromosomes.js"></script>
-<script src="js/chromosome.js"></script>
-<script src="js/cas.js"></script>
-<script src="js/app.js"></script>
+<script src="js/bandes.js?v=2"></script>
+<script src="donnees/chromosomes.js?v=2"></script>
+<script src="js/chromosome.js?v=2"></script>
+<script src="js/cas.js?v=2"></script>
+<script src="js/app.js?v=2"></script>
 </body>
 </html>

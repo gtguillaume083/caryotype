@@ -15,8 +15,8 @@
       consigne: "Range chaque chromosome dans la bonne case : les deux chromosomes d'une paire ont la même taille, le même centromère et les mêmes bandes.",
     },
     sexe: {
-      titre: "Fille ou garçon ?",
-      consigne: "Classe les chromosomes, puis regarde la dernière paire pour dire si ce caryotype est celui d'une fille ou d'un garçon.",
+      titre: "Les chromosomes sexuels",
+      consigne: "Classe les chromosomes, puis observe la dernière paire : combien ce caryotype contient-il de chromosomes X et de chromosomes Y ?",
     },
     anomalie: {
       titre: "Rechercher une anomalie",
@@ -46,12 +46,33 @@
   function codeCas(indexCas, graine) {
     return ((graine % 1679616) * 64 + indexCas).toString(36).toUpperCase();
   }
+  // un caryotype tiré depuis un lien enseignant porte en plus une « marque »
+  // tirée de la clé de correction de l'enseignant : « D7K2Q-4F »
   function lireCode(code) {
-    const n = parseInt(String(code).trim().toLowerCase(), 36);
-    if (!Number.isFinite(n)) return null;
+    const [base, marque] = String(code).trim().toUpperCase().split("-");
+    if (!/^[0-9A-Z]+$/.test(base || "")) return null;
+    const n = parseInt(base.toLowerCase(), 36);
     const indexCas = n % 64;
     if (!Cas.LISTE[indexCas]) return null;
-    return { cas: Cas.LISTE[indexCas], graine: Math.floor(n / 64) };
+    return { cas: Cas.LISTE[indexCas], graine: Math.floor(n / 64), marque: marque || "" };
+  }
+
+  /* Clé de correction : choisie par l'enseignant, jamais transmise aux élèves.
+   * Le lien élève ne contient qu'une marque de 2 caractères calculée à partir
+   * d'elle (empreinte FNV-1a) : on ne peut pas retrouver la clé à partir de
+   * la marque, et sans la clé on ne peut pas ouvrir la solution d'un élève. */
+  function marqueDe(cle) {
+    let h = 0x811c9dc5;
+    for (const ch of String(cle).trim().toUpperCase()) {
+      h ^= ch.codePointAt(0);
+      h = Math.imul(h, 0x01000193) >>> 0;
+    }
+    return (h % 1296).toString(36).toUpperCase().padStart(2, "0");
+  }
+
+  function cleAleatoire() {
+    const lettres = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+    return Array.from({ length: 6 }, () => lettres[Math.floor(Math.random() * lettres.length)]).join("");
   }
   // configuration d'une activité, dans l'URL sous une forme peu lisible
   function encoder(config) {
@@ -254,9 +275,16 @@
     });
   }
 
+  // dans les missions où l'élève doit compter, on n'affiche jamais le total
+  function nombreCache() {
+    return config.activite === "anomalie" || config.activite === "complet";
+  }
+
   function compter() {
     const n = etat.chromos.filter((c) => c.lieu === "lame").length;
-    $("#compteur-lame").textContent = n ? `${n} chromosome${n > 1 ? "s" : ""} à classer` : "tout est classé";
+    let texte = "tout est classé";
+    if (n) texte = nombreCache() ? "des chromosomes restent à classer" : `${n} chromosome${n > 1 ? "s" : ""} à classer`;
+    $("#compteur-lame").textContent = texte;
   }
 
   function sauver() {
@@ -273,6 +301,23 @@
     document.querySelectorAll(".chromo.choisi").forEach((e) => e.classList.remove("choisi"));
     selection = c;
     if (c) elementDe(c).classList.add("choisi");
+    majLoupe();
+  }
+
+  // loupe : le chromosome sélectionné, agrandi et redressé, pour bien voir ses bandes
+  const GROSSISSEMENT = 2.2;
+  function majLoupe() {
+    const loupe = $("#loupe");
+    if (!selection) { loupe.hidden = true; return; }
+    const img = loupe.querySelector("img");
+    img.src = selection.url;
+    img.style.width = selection.w * GROSSISSEMENT + "px";
+    img.style.height = selection.h * GROSSISSEMENT + "px";
+    img.style.transform = selection.inverse ? "rotate(180deg)" : "";
+    // la loupe se met du côté opposé au chromosome pour ne pas le cacher
+    const b = elementDe(selection).getBoundingClientRect();
+    loupe.classList.toggle("a-gauche", b.left + b.width / 2 > window.innerWidth / 2);
+    loupe.hidden = false;
   }
 
   function deplacer(c, lieu, x, y) {
@@ -298,6 +343,7 @@
   function retourner(c) {
     c.inverse = !c.inverse;
     placer(c);
+    if (c === selection) majLoupe();
     sauver();
   }
 
@@ -320,6 +366,30 @@
     let prise = null;
     let dernierToucher = { id: null, t: 0 };
 
+    function survoler(x, y) {
+      document.querySelectorAll(".case.survol").forEach((s) => s.classList.remove("survol"));
+      const cible = cibleSous(x, y, prise.el);
+      if (cible && cible.lieu !== "lame") {
+        document.querySelector(`.case[data-classe="${cible.lieu}"]`).classList.add("survol");
+      }
+    }
+
+    // près du haut ou du bas de l'écran, la page défile toute seule : on peut
+    // ainsi atteindre une case cachée sans lâcher le chromosome (tablette)
+    let minuteur = null;
+    function defiler() {
+      if (!prise || !prise.bouge) { clearInterval(minuteur); minuteur = null; return; }
+      const bord = 80;
+      const y = prise.y;
+      let v = 0;
+      if (y < bord) v = -Math.ceil((bord - y) / 6);
+      else if (y > window.innerHeight - bord) v = Math.ceil((y - (window.innerHeight - bord)) / 6);
+      if (v) {
+        window.scrollBy(0, v);
+        survoler(prise.x, prise.y);
+      }
+    }
+
     document.addEventListener("pointerdown", (e) => {
       const el = e.target.closest(".chromo");
       if (!el || e.button > 0) return;
@@ -340,14 +410,14 @@
         const rot = prise.c.lieu === "lame" ? prise.c.angle + (prise.c.inverse ? 180 : 0) : (prise.c.inverse ? 180 : 0);
         prise.el.style.transform = `translate(-50%, -50%) rotate(${rot}deg) scale(1.08)`;
         document.body.append(prise.el);
+        choisir(null);
+        if (!minuteur) minuteur = setInterval(defiler, 16);
       }
+      prise.x = e.clientX;
+      prise.y = e.clientY;
       prise.el.style.left = e.clientX - prise.dx + "px";
       prise.el.style.top = e.clientY - prise.dy + "px";
-      document.querySelectorAll(".case.survol").forEach((s) => s.classList.remove("survol"));
-      const cible = cibleSous(e.clientX, e.clientY, prise.el);
-      if (cible && cible.lieu !== "lame") {
-        document.querySelector(`.case[data-classe="${cible.lieu}"]`).classList.add("survol");
-      }
+      survoler(e.clientX, e.clientY);
     });
 
     document.addEventListener("pointerup", (e) => {
@@ -410,9 +480,9 @@
       html += `<label class="q" data-q="nombre">Nombre de chromosomes
         <input type="number" id="r-nombre" min="1" max="99" inputmode="numeric"></label>`;
     }
-    html += `<fieldset class="q" data-q="sexe"><legend>Ce caryotype est celui</legend>
-      <label><input type="radio" name="r-sexe" value="fille"> d'une fille</label>
-      <label><input type="radio" name="r-sexe" value="garcon"> d'un garçon</label></fieldset>`;
+    html += `<fieldset class="q" data-q="sexuels"><legend>Chromosomes sexuels</legend>
+      <label>Nombre de chromosomes X <input type="number" id="r-x" min="0" max="9" inputmode="numeric"></label>
+      <label>Nombre de chromosomes Y <input type="number" id="r-y" min="0" max="9" inputmode="numeric"></label></fieldset>`;
     if (a !== "sexe") {
       html += `<fieldset class="q" data-q="anomalie"><legend>Anomalie</legend>
         <select id="r-anomalie">
@@ -442,8 +512,7 @@
 
   function lireReponses() {
     const v = (s) => { const e = $(s); return e ? e.value : ""; };
-    const sexe = document.querySelector("input[name=r-sexe]:checked");
-    return { nombre: v("#r-nombre"), sexe: sexe ? sexe.value : "", anomalie: v("#r-anomalie"),
+    return { nombre: v("#r-nombre"), x: v("#r-x"), y: v("#r-y"), anomalie: v("#r-anomalie"),
       quel: v("#r-quel"), formule: v("#r-formule"), justif: v("#r-justif") };
   }
 
@@ -451,9 +520,7 @@
     if (!r) return;
     const m = (s, val) => { const e = $(s); if (e && val != null) e.value = val; };
     m("#r-nombre", r.nombre); m("#r-anomalie", r.anomalie); m("#r-quel", r.quel);
-    m("#r-formule", r.formule); m("#r-justif", r.justif);
-    const s = document.querySelector(`input[name=r-sexe][value="${r.sexe}"]`);
-    if (s) s.checked = true;
+    m("#r-formule", r.formule); m("#r-justif", r.justif); m("#r-x", r.x); m("#r-y", r.y);
     const an = $("#r-anomalie");
     if (an) an.dispatchEvent(new Event("change"));
   }
@@ -475,10 +542,21 @@
     const total = etat.chromos.length;
     const lignes = [];
     const classeOk = justes === total;
-    lignes.push(classeOk
-      ? `<p class="ok">Classement parfait : les ${total} chromosomes sont à leur place.</p>`
-      : `<p>${justes} chromosome${justes > 1 ? "s" : ""} bien placé${justes > 1 ? "s" : ""} sur ${total}`
-        + (restants ? `, ${restants} encore sur la lame` : "") + ". Les chromosomes entourés de rouge sont mal placés.</p>");
+    const faux = total - justes - restants;
+    const pluriel = (n, mot) => `${n} ${mot}${n > 1 ? "s" : ""}`;
+    if (classeOk) {
+      lignes.push(nombreCache()
+        ? `<p class="ok">Classement parfait : tous les chromosomes sont à leur place.</p>`
+        : `<p class="ok">Classement parfait : les ${total} chromosomes sont à leur place.</p>`);
+    } else if (nombreCache()) {
+      // pas de « x sur y » : l'élève doit compter lui-même
+      lignes.push(`<p>${faux ? pluriel(faux, "chromosome") + " mal placé" + (faux > 1 ? "s" : "") + " (entouré" + (faux > 1 ? "s" : "") + " de rouge)." : "Aucun chromosome mal placé."}`
+        + (restants ? " Il reste des chromosomes sur la lame." : "") + "</p>");
+    } else {
+      lignes.push(`<p>${pluriel(justes, "chromosome")} bien placé${justes > 1 ? "s" : ""} sur ${total}`
+        + (restants ? `, ${restants} encore sur la lame` : "") + "."
+        + (faux ? " Les chromosomes entourés de rouge sont mal placés." : "") + "</p>");
+    }
     const malTournes = etat.chromos.filter((c) => c.lieu !== "lame" && c.inverse).length;
     if (malTournes) lignes.push(`<p class="conseil">${malTournes} chromosome${malTournes > 1 ? "s sont" : " est"} à l'envers : double-clic pour mettre le bras court en haut.</p>`);
 
@@ -493,7 +571,8 @@
         if (!ok) reponsesOk = false;
         return ok;
       };
-      const sexeOk = marque("sexe", r.sexe === Cas.sexe(liste));
+      const xy = Cas.nombreXY(liste);
+      const sexuelsOk = marque("sexuels", r.x !== "" && r.y !== "" && +r.x === xy.x && +r.y === xy.y);
       const res = [];
       if (a !== "sexe") {
         res.push(marque("nombre", +r.nombre === total) ? "nombre juste" : "nombre faux");
@@ -507,15 +586,20 @@
         const fOk = Cas.normaliserFormule(r.formule) === Cas.normaliserFormule(etat.cas.formule);
         res.push(marque("formule", fOk) ? "formule juste" : "formule fausse");
       }
-      res.unshift(sexeOk ? "sexe juste" : "sexe faux");
+      res.unshift(sexuelsOk ? "chromosomes sexuels justes" : "chromosomes sexuels faux");
       lignes.push(`<p>Réponses : ${res.join(", ")}.</p>`);
-      if (reponsesOk) lignes.push(`<p class="ok">Bravo ! ${a === "sexe" ? "" : "Diagnostic : <b>" + Cas.nomAnomalie(liste) + "</b>."}</p>`);
+      if (reponsesOk) lignes.push(`<p class="ok">Bonnes réponses. ${a === "sexe" ? "" : "Diagnostic : <b>" + Cas.nomAnomalie(liste) + "</b>."}</p>`);
     }
     const bilan = $("#bilan");
     bilan.innerHTML = lignes.join("");
     bilan.hidden = false;
     bilan.className = "bilan" + (classeOk && reponsesOk ? " bilan-ok" : "");
-    if (config.solution) $("#btn-solution").hidden = false;
+    // la solution n'est proposée qu'une fois tous les chromosomes rangés
+    $("#btn-solution").hidden = !(config.solution && restants === 0);
+    if (config.solution && restants > 0) {
+      lignes.push(`<p class="conseil">Range tous les chromosomes dans le caryogramme pour pouvoir consulter la solution.</p>`);
+      bilan.innerHTML = lignes.join("");
+    }
   }
 
   function montrerSolution() {
@@ -531,7 +615,7 @@
     bilan.hidden = false;
     bilan.className = "bilan bilan-solution";
     bilan.innerHTML = `<p><b>Solution</b> — formule : <b>${etat.cas.formule}</b> ; `
-      + `${Cas.sexe(liste) === "fille" ? "fille" : "garçon"} ; ${Cas.nomAnomalie(liste)}.`
+      + `chromosomes sexuels : ${Cas.chromosomesSexuels(liste)} ; ${Cas.nomAnomalie(liste)}.`
       + (etat.cas.type === "photo" ? ` <span class="source">Photo : ${Cas.CREDITS[etat.cas.source]}${etat.cas.montage ? " (montage pédagogique)" : ""}.</span>` : "")
       + "</p>";
   }
@@ -548,14 +632,18 @@
     return liste[Math.floor(Math.random() * liste.length)];
   }
 
-  function demarrer(conf, code, solution) {
+  /* cle : clé de correction de l'enseignant ; la solution n'est montrée
+   * que si elle correspond à la marque du code de l'élève. */
+  function demarrer(conf, code, cle) {
     config = conf;
     let cas, graine;
     const lu = code && lireCode(code);
     if (lu) { cas = lu.cas; graine = lu.graine; }
     else { cas = choisirCas(conf); graine = Math.floor(Math.random() * 1679616); }
     const indexCas = Cas.LISTE.indexOf(cas);
-    etat = { cas, graine, code: codeCas(indexCas, graine), solution: !!solution };
+    const codeEleve = codeCas(indexCas, graine) + (conf.m ? "-" + conf.m : "");
+    const solution = !!(cle && conf.m && marqueDe(cle) === conf.m);
+    etat = { cas, graine, code: codeEleve, solution };
     etat.chromos = fabriquer(cas, graine);
     verifie = false;
     selection = null;
@@ -590,7 +678,7 @@
     url.search = "";
     url.searchParams.set("p", encoder(conf));
     url.searchParams.set("code", etat.code);
-    if (solution) url.searchParams.set("solution", "1");
+    if (solution) url.searchParams.set("cle", cle);
     history.replaceState(null, "", url);
     window.scrollTo(0, 0);
   }
@@ -632,6 +720,13 @@
     majLienProf();
   }
 
+  function cleProf() {
+    const champ = $("#prof-cle");
+    if (!champ.value.trim()) champ.value = memoire.lire("cle", "") || cleAleatoire();
+    memoire.ecrire("cle", champ.value.trim());
+    return champ.value.trim();
+  }
+
   function configProf() {
     return {
       activite: $("#prof-activite").value,
@@ -639,6 +734,7 @@
       modeles: $("#prof-modeles").checked,
       rotation: $("#prof-rotation").checked,
       solution: $("#prof-solution").checked,
+      m: marqueDe(cleProf()),
     };
   }
 
@@ -705,12 +801,19 @@
       demarrer(conf);
     });
     $("#prof-corriger").addEventListener("click", () => {
-      const code = $("#prof-code").value.trim();
-      if (!lireCode(code)) { $("#prof-code").setCustomValidity("Code inconnu"); $("#prof-code").reportValidity(); return; }
+      const champ = $("#prof-code");
+      const lu = lireCode(champ.value);
+      const cle = cleProf();
+      let erreur = "";
+      if (!lu) erreur = "Code inconnu.";
+      else if (!lu.marque) erreur = "Ce caryotype n'a pas été tiré depuis un lien enseignant : il n'a pas de correction.";
+      else if (marqueDe(cle) !== lu.marque) erreur = "Ce code ne correspond pas à votre clé de correction.";
+      if (erreur) { champ.setCustomValidity(erreur); champ.reportValidity(); return; }
       $("#dlg-prof").close();
-      demarrer(Object.assign(configProf(), { solution: true }), code, true);
+      demarrer(Object.assign(configProf(), { m: lu.marque }), champ.value.trim().split("-")[0], cle);
     });
     $("#prof-code").addEventListener("input", () => $("#prof-code").setCustomValidity(""));
+    $("#prof-cle").addEventListener("change", () => { cleProf(); majLienProf(); });
 
     $("#ouvrir-credits").addEventListener("click", () => {
       const ul = $("#liste-credits");
@@ -725,11 +828,11 @@
       $("#dlg-credits").showModal();
     });
 
-    // lien préparé par l'enseignant : ?p=…[&code=…][&solution=1]
+    // lien préparé par l'enseignant : ?p=…[&code=…][&cle=…]
     const params = new URLSearchParams(location.search);
     const conf = params.get("p") && decoder(params.get("p"));
     if (conf && Array.isArray(conf.cas) && ACTIVITES[conf.activite]) {
-      demarrer(conf, params.get("code"), params.get("solution") === "1");
+      demarrer(conf, params.get("code"), params.get("cle"));
     }
   }
 

@@ -187,6 +187,20 @@ dialog::backdrop { background: rgb(20 30 40 / 45%); }
 #planche figure { margin: 0; text-align: center; }
 #planche figcaption { font-size: .8rem; font-weight: 600; color: var(--texte-doux); }
 
+/* ---------- loupe ---------- */
+#loupe {
+  position: fixed; right: 16px; bottom: 16px; z-index: 900;
+  background: var(--surface); border: 1px solid var(--bordure); border-radius: var(--rayon);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 18%);
+  padding: 8px 14px 12px;
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  max-height: 50vh; overflow: hidden;
+  pointer-events: none;
+}
+#loupe.a-gauche { right: auto; left: 16px; }
+#loupe img { display: block; max-height: calc(50vh - 40px); object-fit: contain; }
+.loupe-titre { font-size: .8rem; font-weight: 600; color: var(--texte-doux); }
+
 .impression-entete { display: none; }
 
 @media (max-width: 640px) {
@@ -199,7 +213,7 @@ dialog::backdrop { background: rgb(20 30 40 / 45%); }
 /* ---------- impression : le caryogramme et les réponses ---------- */
 @media print {
   body { background: #fff; }
-  .barre, .consigne, #panneau-lame, .actions, .astuce, .modele { display: none !important; }
+  .barre, .consigne, #panneau-lame, .actions, .astuce, .modele, #loupe { display: none !important; }
   .impression-entete { display: block; font-weight: 600; margin-bottom: 10px; }
   .espace { display: block; }
   .panneau { border: 0; padding: 0; }

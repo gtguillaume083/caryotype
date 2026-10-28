@@ -7,9 +7,9 @@ L'élève fait glisser les chromosomes d'une « lame de microscope » vers le ca
 | Mission | Ce que fait l'élève |
 |---|---|
 | Reconstituer un caryotype | Classer les chromosomes par paires (1 à 22, X, Y) |
-| Fille ou garçon ? | Classer, puis déterminer le sexe |
+| Les chromosomes sexuels | Classer, puis compter les chromosomes X et Y |
 | Rechercher une anomalie | Compter les chromosomes, repérer un chromosome en trop ou en moins |
-| Analyse complète | Sexe, anomalie et formule chromosomique (ex. `47,XY,+21`) |
+| Analyse complète | Chromosomes sexuels, anomalie et formule chromosomique (ex. `47,XY,+21`) |
 
 ## Deux sortes de chromosomes
 
@@ -22,7 +22,7 @@ Le bouton **Espace enseignant**, sur la page d'accueil, permet de :
 
 - choisir la mission, les caryotypes possibles (un est tiré au hasard pour chaque élève) et les aides ;
 - copier un **lien** à donner aux élèves (ENT, Pronote, QR code) ;
-- **corriger** : chaque élève a un code de caryotype (en haut de l'écran et sur la feuille imprimée) qui rouvre exactement son caryotype avec la solution.
+- **corriger** : chaque élève a un code de caryotype (en haut de l'écran et sur la feuille imprimée). Avec ce code et votre **clé de correction** (choisie dans l'Espace enseignant, absente du lien élève), vous rouvrez exactement son caryotype avec la solution.
 
 Rien n'est envoyé sur Internet : pas de compte, pas de collecte de données. Le travail en cours est seulement gardé dans le navigateur de l'élève. Le bouton **Imprimer** produit une feuille (ou un PDF) avec le nom de l'élève, son caryogramme et ses réponses.
 
@@ -48,6 +48,8 @@ outils/               scripts Python de préparation des données
   decouper.py         découpe et classe les chromosomes des photos
   sources/            fichiers d'origine
 ```
+
+Après toute modification des fichiers CSS ou JS, augmentez le numéro `?v=` dans `app/index.html` : les navigateurs des élèves rechargeront alors les nouveaux fichiers au lieu de garder les anciens en cache.
 
 Pour ajouter une photo de caryogramme : la placer dans `outils/sources/karyogrammes/`, ajouter une entrée dans `CAS` de `outils/decouper.py` (seuil, rangées attendues), lancer `python outils/decouper.py <nom>`, contrôler l'image produite dans `outils/controle/`, puis déclarer le cas dans `app/js/cas.js` avec ses crédits. Les scripts demandent `numpy`, `scipy` et `Pillow`.
 

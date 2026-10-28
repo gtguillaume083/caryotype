@@ -363,76 +363,152 @@
   /* 3a. Gène ABO : choisir les allèles de chaque chromosome 9 */
   function expAlleles(el) {
     const al = ["A", "O"];
+    let reponse = null; // groupe proposé par l'élève pour l'hématie affichée
     el.innerHTML = `<div class="allele-scene">
-        <div class="allele-col" data-i="0"></div>
-        <div class="allele-col" data-i="1"></div>
+        <figure class="allele-cellule">
+          <div class="noyau-allele">
+            <div class="allele-col" data-i="0"></div>
+            <div class="allele-col" data-i="1"></div>
+          </div>
+          <figcaption>Noyau d'une cellule : la paire de chromosomes 9.<br><small>(Les 44 autres chromosomes ne sont pas représentés.)</small></figcaption>
+        </figure>
+        <div class="allele-fleche" aria-hidden="true">→</div>
         <div class="allele-resultat" aria-live="polite"></div>
+      </div>
+      <div class="allele-commandes">
+        ${[0, 1].map((i) => `<div class="allele-choix" role="group" aria-label="Allèle sur le chromosome 9 venu ${i === 0 ? "de la mère" : "du père"}" data-i="${i}">
+          <span style="color:${i === 0 ? COULEUR_MERE : COULEUR_PERE}">Allèle sur le chromosome venu ${i === 0 ? "de la mère" : "du père"} :</span>
+          ${["A", "B", "O"].map((a) => `<button class="btn" data-a="${a}">${a}</button>`).join("")}</div>`).join("")}
       </div>`;
+
     function colonne(i) {
-      const k = chromo("9", { echelle: 1.6, teinte: i === 0 ? MERE : PERE });
+      const k = chromo("9", { echelle: 1.5, une: true, teinte: i === 0 ? MERE : PERE });
       const y = k.pad + LOCUS_ABO * k.L;
       return `<div class="allele-titre" style="color:${i === 0 ? COULEUR_MERE : COULEUR_PERE}">Chromosome 9<br><small>venu ${i === 0 ? "de la mère" : "du père"}</small></div>
         <div class="allele-chromo" style="height:${k.h}px">
           <img src="${k.url}" width="${k.w}" height="${k.h}" alt="Chromosome 9">
           <span class="locus" style="top:${y}px"></span>
-        </div>
-        <div class="locus-legende"><span class="locus-carre"></span> gène ABO : allèle <b>${al[i]}</b></div>
-        <div class="allele-choix" role="group" aria-label="Allèle sur ce chromosome">
-          ${["A", "B", "O"].map((a) => `<button class="btn ${al[i] === a ? "btn-principal" : ""}" data-a="${a}">${a}</button>`).join("")}
+          <span class="locus-etiquette" style="top:${y}px">allèle <b>${al[i]}</b></span>
         </div>`;
     }
+
+    // hématie vue de face, avec ses marqueurs de surface (A : triangle, B : rond)
+    function hematie(g) {
+      const marqueurs = g === "AB" ? ["A", "B"] : g === "O" ? [] : [g];
+      let m = "";
+      const N = 14;
+      for (let i = 0; i < N && marqueurs.length; i++) {
+        const t = marqueurs[i % marqueurs.length];
+        const a = (i / N) * Math.PI * 2;
+        const deg = (a * 180) / Math.PI + 90;
+        m += `<g transform="translate(${(110 + Math.cos(a) * 82).toFixed(1)},${(110 + Math.sin(a) * 82).toFixed(1)}) rotate(${deg.toFixed(1)})">
+          <line x1="0" y1="0" x2="0" y2="-9" stroke="#333" stroke-width="2"/>
+          ${t === "A" ? `<polygon points="0,-8 -7,-21 7,-21" fill="#f4c430" stroke="#6b5200" stroke-width="1.2"/>`
+            : `<circle cx="0" cy="-15" r="6" fill="#3b8fd9" stroke="#123f6b" stroke-width="1.2"/>`}</g>`;
+      }
+      return `<svg viewBox="0 0 220 220" class="hematie" role="img" aria-label="Hématie ${marqueurs.length ? "portant les marqueurs " + marqueurs.join(" et ") : "sans marqueur A ni B"}">
+        <defs><radialGradient id="hem-creux"><stop offset="0" stop-color="#e88a8a"/><stop offset=".45" stop-color="#d44c4c"/><stop offset="1" stop-color="#b52a2a"/></radialGradient></defs>
+        <circle cx="110" cy="110" r="80" fill="url(#hem-creux)" stroke="#8f1f1f" stroke-width="2"/>${m}</svg>`;
+    }
+
     function maj() {
       $$(".allele-col", el).forEach((c, i) => { c.innerHTML = colonne(i); });
+      $$(".allele-choix", el).forEach((d, i) => $$("[data-a]", d).forEach((b) => b.classList.toggle("btn-principal", b.dataset.a === al[i])));
       const g = groupe(al[0], al[1]);
-      let pourquoi;
-      if (al[0] === al[1]) pourquoi = `Les deux allèles sont identiques (${al[0]} et ${al[1]}).`;
-      else if (g === "AB") pourquoi = "Les allèles A et B s'expriment tous les deux.";
-      else pourquoi = `L'allèle O ne s'exprime pas quand il est avec l'allèle ${g} : on dit qu'il est <b>récessif</b>.`;
-      $(".allele-resultat", el).innerHTML = `<div class="goutte" aria-hidden="true">${g}</div>
-        <p><b>Allèles : ${al[0]} et ${al[1]}</b><br>Groupe sanguin : <b>${g}</b></p><p class="petit">${pourquoi}</p>`;
+      let retour = "";
+      if (reponse) {
+        let pourquoi;
+        if (g === "O") pourquoi = "Aucun des deux allèles O ne permet de fabriquer un marqueur A ou B.";
+        else if (g === "AB") pourquoi = "Les allèles A et B s'expriment tous les deux : on voit les deux marqueurs.";
+        else if (al[0] === al[1]) pourquoi = `Les deux allèles ${g} permettent de fabriquer le marqueur ${g}.`;
+        else pourquoi = `L'allèle ${g} s'exprime, l'allèle O ne s'exprime pas : on dit que l'allèle O est <b>récessif</b>.`;
+        retour = reponse === g
+          ? `<p class="ok"><b>Oui !</b> Groupe <b>${g}</b>. ${pourquoi}</p>`
+          : `<p class="ko">Pas tout à fait. Regarde bien les marqueurs à la surface : triangle = marqueur A, rond = marqueur B, aucun = groupe O.</p>`;
+      }
+      $(".allele-resultat", el).innerHTML = `<p class="petit">Les allèles déterminent les <b>marqueurs</b> à la surface des hématies (globules rouges).</p>
+        ${hematie(g)}
+        <p class="hem-legende"><span class="m-a"></span> marqueur A <span class="m-b"></span> marqueur B</p>
+        <p><b>Quel est le groupe sanguin de cette personne ?</b></p>
+        <div class="hem-choix">${["A", "B", "AB", "O"].map((x) => `<button class="btn ${reponse === x ? (x === g ? "juste" : "faux") : ""}" data-g="${x}">${x}</button>`).join("")}</div>
+        <div class="hem-retour">${retour}</div>`;
     }
     el.addEventListener("click", (e) => {
-      const b = e.target.closest("[data-a]");
-      if (!b) return;
-      al[+b.closest(".allele-col").dataset.i] = b.dataset.a;
+      const a = e.target.closest("[data-a]");
+      const g = e.target.closest("[data-g]");
+      if (a) { al[+a.closest(".allele-choix").dataset.i] = a.dataset.a; reponse = null; }
+      else if (g) reponse = g.dataset.g;
+      else return;
       maj();
     });
     maj();
   }
 
-  /* 3b. L'environnement agit aussi : l'hortensia */
+  /* 3b. L'environnement agit aussi : deux hortensias issus de boutures de la
+   * même plante (mêmes gènes), chacun dans un sol différent. */
+  function feuille(x, y, ang, L, W) {
+    // feuille ovale dentelée, de la base (x, y) vers la pointe
+    const g = [], d = [];
+    for (let i = 0; i <= 16; i++) {
+      const t = i / 16;
+      const larg = Math.sin(Math.PI * Math.pow(t, 0.8)) * W / 2 * (i % 2 && i > 1 && i < 15 ? 1.12 : 1);
+      g.push([t * L, -larg]);
+      d.push([t * L, larg]);
+    }
+    const pts = g.concat(d.reverse()).map((p) => p[0].toFixed(1) + "," + p[1].toFixed(1)).join(" ");
+    return `<g transform="translate(${x},${y}) rotate(${ang})"><polygon points="${pts}" fill="#4f8f3a" stroke="#2f5e22" stroke-width="1.2" stroke-linejoin="round"/>
+      <line x1="2" y1="0" x2="${L - 4}" y2="0" stroke="#2f5e22" stroke-width="1.2"/></g>`;
+  }
+  function dessinHortensia(graine) {
+    const r = Chromosome.aleatoire(graine);
+    const fleurs = [];
+    for (let i = 0; i < 46; i++) {
+      const a = r() * Math.PI * 2, d = Math.sqrt(r()) * 52;
+      fleurs.push({ x: 100 + Math.cos(a) * d, y: 76 + Math.sin(a) * d * 0.82, rot: r() * 90, s: 0.85 + r() * 0.3, nuance: 0.82 + r() * 0.3 });
+    }
+    fleurs.sort((p, q) => p.y - q.y);
+    const petales = fleurs.map((f) => `<g transform="translate(${f.x.toFixed(1)},${f.y.toFixed(1)}) rotate(${f.rot.toFixed(0)}) scale(${f.s.toFixed(2)})" data-nuance="${f.nuance.toFixed(2)}" class="fleuron">
+        ${[0, 90, 180, 270].map((a) => `<ellipse cx="0" cy="-5.5" rx="4.6" ry="6" transform="rotate(${a})" class="petale" stroke="#0002" stroke-width=".6"/>`).join("")}
+        <circle r="1.6" fill="#fffbe6"/></g>`).join("");
+    return `<path d="M100 196 C100 170 98 150 100 120" stroke="#3f7a2e" stroke-width="6" fill="none"/>
+      ${feuille(100, 172, 200, 58, 26)}${feuille(100, 164, -20, 60, 27)}${feuille(100, 148, 215, 46, 21)}${feuille(100, 142, -35, 48, 22)}
+      ${petales}
+      <path d="M58 196 L142 196 L134 246 L66 246 Z" fill="#b5653d" stroke="#7d3f22" stroke-width="2"/>
+      <rect x="54" y="190" width="92" height="10" rx="3" fill="#c97448" stroke="#7d3f22" stroke-width="2"/>
+      <ellipse cx="100" cy="191" rx="42" ry="4" class="terre"/>`;
+  }
   function expHortensia(el) {
-    el.innerHTML = `<div class="hortensia">
-      <svg viewBox="0 0 200 170" class="hortensia-svg" role="img" aria-label="Fleurs d'hortensia"></svg>
-      <div class="hortensia-commande">
-        <label for="h-sol">Sol de la plante</label>
-        <input id="h-sol" type="range" min="0" max="100" value="20">
+    const plantes = [{ v: 15 }, { v: 85 }];
+    el.innerHTML = `<div class="hortensias">${plantes.map((p, i) => `<figure class="hortensia" data-i="${i}">
+        <svg viewBox="0 0 200 250" class="hortensia-svg" role="img" aria-label="Hortensia en pot ${i + 1}">${dessinHortensia(5)}</svg>
+        <figcaption><b>Hortensia ${i + 1}</b></figcaption>
+        <label for="h-sol-${i}">Sol du pot ${i + 1}</label>
+        <input id="h-sol-${i}" type="range" min="0" max="100" value="${p.v}">
         <div class="h-echelle"><span>très acide</span><span>calcaire</span></div>
-        <p class="h-texte" aria-live="polite"></p>
-      </div></div>`;
-    const svg = $("svg", el);
-    let fleurs = "";
-    const r = Chromosome.aleatoire(5);
-    for (let i = 0; i < 26; i++) {
-      const a = r() * Math.PI * 2;
-      const d = Math.sqrt(r()) * 52;
-      const x = 100 + Math.cos(a) * d;
-      const y = 70 + Math.sin(a) * d * 0.8;
-      fleurs += `<g transform="translate(${x.toFixed(1)},${y.toFixed(1)}) rotate(${(r() * 90).toFixed(0)})">
-        <ellipse rx="9" ry="5" class="petale"/><ellipse rx="5" ry="9" class="petale"/><circle r="2" fill="#fff8"/></g>`;
-    }
-    svg.innerHTML = `<path d="M100 120 L100 168 M100 140 Q80 130 70 120 M100 150 Q122 138 132 128" stroke="#4f8a3a" stroke-width="5" fill="none"/>
-      <ellipse cx="66" cy="122" rx="16" ry="8" fill="#5c9a45"/><ellipse cx="136" cy="128" rx="16" ry="8" fill="#5c9a45"/>${fleurs}`;
+        <p class="h-texte" aria-live="polite"></p></figure>`).join("")}</div>
+      <p class="h-bilan" aria-live="polite"></p>`;
+    const categorie = (v) => (v < 0.35 ? 0 : v > 0.65 ? 2 : 1);
     function maj() {
-      const v = +$("#h-sol", el).value / 100;
-      const c1 = [70, 110, 230];
-      const c2 = [236, 120, 170];
-      const c = c1.map((x, i) => Math.round(x + (c2[i] - x) * v));
-      $$(".petale", el).forEach((p) => { p.setAttribute("fill", `rgb(${c.join(",")})`); });
-      $(".h-texte", el).innerHTML = v < 0.35 ? "Sol acide : fleurs <b>bleues</b>."
-        : v > 0.65 ? "Sol calcaire : fleurs <b>roses</b>." : "Sol intermédiaire : fleurs <b>violettes</b>.";
+      const cats = $$(".hortensia", el).map((fig, i) => {
+        const v = +$(`#h-sol-${i}`, el).value / 100;
+        const c1 = [70, 110, 230], c2 = [236, 120, 170];
+        const c = c1.map((x, k) => x + (c2[k] - x) * v);
+        $$(".fleuron", fig).forEach((f) => {
+          const n = +f.dataset.nuance;
+          const col = `rgb(${c.map((x) => Math.min(255, Math.round(x * n))).join(",")})`;
+          $$(".petale", f).forEach((p) => p.setAttribute("fill", col));
+        });
+        const terre = [[58, 42, 32], [176, 160, 132]].reduce((a, b) => a.map((x, k) => Math.round(x + (b[k] - x) * v)));
+        $(".terre", fig).setAttribute("fill", `rgb(${terre.join(",")})`);
+        const cat = categorie(v);
+        $(".h-texte", fig).innerHTML = ["Sol acide : fleurs <b>bleues</b>.", "Sol intermédiaire : fleurs <b>violettes</b>.", "Sol calcaire : fleurs <b>roses</b>."][cat];
+        return cat;
+      });
+      $(".h-bilan", el).innerHTML = cats[0] !== cats[1]
+        ? "<b>Mêmes gènes, sols différents → couleurs différentes.</b> L'environnement agit sur le phénotype."
+        : "Les deux sols se ressemblent : les fleurs ont la même couleur. Change le sol d'un des pots.";
     }
-    $("#h-sol", el).addEventListener("input", maj);
+    el.addEventListener("input", maj);
     maj();
   }
 
@@ -925,9 +1001,9 @@
       decouvre: `<p>Un gène occupe toujours <b>la même place</b> sur un chromosome donné. Par exemple, le gène qui détermine le <b>groupe sanguin</b> (A, B, AB ou O) se trouve sur le <b>chromosome 9</b>.</p>
         <p>Ce gène existe en plusieurs versions, qu'on appelle des <b>allèles</b> : l'allèle A, l'allèle B et l'allèle O. Comme nous avons <b>deux chromosomes 9</b>, nous avons <b>deux allèles</b> de ce gène : ils peuvent être identiques ou différents.</p>`,
       experiences: [
-        { titre: "Choisis les allèles et observe le groupe sanguin", faire: expAlleles },
+        { titre: "Choisis les allèles, observe l'hématie et déduis le groupe sanguin", faire: expAlleles },
         { titre: "Les gènes ne font pas tout : l'environnement compte aussi", faire: expHortensia,
-          avant: "<p class=\"petit\">Ces hortensias ont exactement les mêmes gènes. Change le sol et observe la couleur des fleurs.</p>" },
+          avant: "<p class=\"petit\">Ces deux hortensias sont des boutures de la même plante : ils ont <b>exactement les mêmes gènes</b>. Change le sol de chaque pot et compare la couleur des fleurs.</p>" },
       ],
       questions: [
         { q: "Combien d'allèles du gène du groupe sanguin possède chaque personne ?", options: ["Un seul", "Deux (un sur chaque chromosome 9)", "Trois : A, B et O"], bonne: 1,

@@ -107,25 +107,43 @@ body.parcours { font-size: 17px; }
 .k-info { background: var(--primaire-clair); border-radius: 8px; padding: 8px 12px; min-height: 3em; }
 
 /* allèles */
-.allele-scene { display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start; justify-content: center; }
-.allele-col { display: flex; flex-direction: column; align-items: center; gap: 8px; min-width: 150px; }
-.allele-titre { text-align: center; font-weight: 700; }
-.allele-chromo { position: relative; display: flex; justify-content: center; width: 150px; }
+.allele-scene { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; justify-content: center; }
+.allele-cellule { margin: 0; text-align: center; }
+.allele-cellule figcaption { font-size: .85rem; color: #555; margin-top: 6px; }
+.noyau-allele { display: flex; gap: 44px; justify-content: center; padding: 44px 62px 52px; background: #efe6f8; border: 3px solid #8e6bb8; border-radius: 50%; }
+@media (max-width: 520px) { .noyau-allele { padding: 34px 26px 42px; gap: 22px; } .allele-fleche { transform: rotate(90deg); } }
+.allele-col { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.allele-titre { text-align: center; font-weight: 700; font-size: .9rem; white-space: nowrap; }
+.allele-chromo { position: relative; display: flex; justify-content: center; width: 90px; }
 .allele-chromo img { display: block; }
-.locus { position: absolute; left: 50%; width: 30px; height: 5px; margin-left: -15px; margin-top: -2px; background: #f4c430; border-radius: 2px; box-shadow: 0 0 0 1px #9a7a00; }
-.locus-etiquette { position: absolute; left: calc(50% + 18px); transform: translateY(-50%); white-space: nowrap; font-size: .8rem; background: #fff8dd; border: 1px solid #e0c060; border-radius: 6px; padding: 1px 6px; }
-.allele-choix { display: flex; gap: 6px; }
+.locus { position: absolute; left: 50%; width: 24px; height: 5px; margin-left: -12px; margin-top: -2px; background: #f4c430; border-radius: 2px; box-shadow: 0 0 0 1px #9a7a00; }
+.locus-etiquette { position: absolute; left: calc(50% + 15px); transform: translateY(-50%); white-space: nowrap; font-size: .8rem; background: #fff8dd; border: 1px solid #e0c060; border-radius: 6px; padding: 1px 6px; }
+.allele-fleche { font-size: 2rem; color: #888; }
+.allele-commandes { display: flex; flex-wrap: wrap; gap: 10px 24px; justify-content: center; margin-top: 12px; }
+.allele-choix { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; justify-content: center; }
+.allele-choix span { font-weight: 700; font-size: .9rem; }
 .allele-choix .btn { min-width: 46px; font-weight: 700; font-size: 1.1rem; }
-.allele-resultat { flex: 1 1 220px; max-width: 300px; align-self: center; text-align: center; background: #fff5f5; border: 1px solid #f0c8c8; border-radius: 12px; padding: 12px; }
-.goutte { width: 70px; height: 86px; margin: 0 auto 6px; background: #c62f2f; color: #fff; font-weight: 800; font-size: 1.5rem; display: grid; place-items: center; border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; clip-path: path("M35 0 C35 0 0 42 0 58 A35 35 0 0 0 70 58 C70 42 35 0 35 0Z"); padding-top: 22px; }
+.allele-resultat { flex: 1 1 240px; max-width: 320px; text-align: center; background: #fff5f5; border: 1px solid #f0c8c8; border-radius: 12px; padding: 12px; }
+.allele-resultat p { margin: 6px 0; }
+.hematie { width: 170px; height: auto; display: block; margin: 0 auto; }
+.hem-legende { font-size: .85rem; display: flex; gap: 6px; align-items: center; justify-content: center; }
+.m-a { display: inline-block; width: 0; height: 0; border-left: 7px solid transparent; border-right: 7px solid transparent; border-top: 12px solid #f4c430; }
+.m-b { display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: #3b8fd9; margin-left: 8px; }
+.hem-choix { display: flex; gap: 6px; justify-content: center; }
+.hem-choix .btn { min-width: 50px; font-weight: 700; }
+.hem-choix .btn.juste { background: var(--juste); border-color: var(--juste); color: #fff; }
+.hem-choix .btn.faux { background: var(--faux); border-color: var(--faux); color: #fff; }
+.hem-retour .ok { color: #1f6b3d; }
+.hem-retour .ko { color: var(--faux); }
 
-/* hortensia */
-.hortensia { display: flex; flex-wrap: wrap; gap: 20px; align-items: center; justify-content: center; }
-.hortensia-svg { width: 220px; height: auto; }
+/* hortensias */
+.hortensias { display: flex; flex-wrap: wrap; gap: 24px; justify-content: center; }
+.hortensia { margin: 0; flex: 0 1 240px; display: flex; flex-direction: column; align-items: stretch; text-align: center; }
+.hortensia-svg { width: 190px; height: auto; margin: 0 auto; }
 .petale { transition: fill .3s; }
-.hortensia-commande { flex: 1 1 240px; max-width: 360px; }
-.hortensia-commande label { font-weight: 700; }
-.hortensia-commande input { width: 100%; }
+.hortensia label { font-weight: 700; margin-top: 6px; }
+.hortensia input { width: 100%; }
+.h-bilan { text-align: center; margin-top: 10px; }
 .h-echelle { display: flex; justify-content: space-between; font-size: .85rem; color: var(--texte-doux); }
 
 /* mutation */

@@ -2,6 +2,8 @@
 
 Application web libre pour apprendre à **réaliser et analyser un caryotype humain** en SVT au collège (cycle 4).
 
+*Vibecodé avec Claude (Anthropic) : application conçue par un enseignant de SVT et programmée avec l'assistant d'IA Claude.*
+
 L'application a deux parties.
 
 ## 1. Parcours guidé « Comprendre la génétique »

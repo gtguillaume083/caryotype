@@ -45,6 +45,8 @@ body.parcours { font-size: 17px; }
   .allele-fleche { display: none; }
 }
 
+.credit-parcours { margin-top: 28px; font-size: .85rem; color: var(--texte-doux); }
+
 /* ---------- chapitre ---------- */
 #chapitre:focus { outline: none; }
 .chap, .trace { max-width: 920px; }

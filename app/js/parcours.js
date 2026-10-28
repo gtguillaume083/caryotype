@@ -738,7 +738,7 @@
           ["m", "p"].forEach((o) => {
             const cote = (o === "m" ? 0 : 1) === ctx.orientation[ip] ? -1 : 1;
             ctx.items.filter((it) => it.c === c && it.o === o)
-              .forEach((it) => ctx.poser(it, 320 + cote * 26 + (it.ct ? 1 : -1) * ctx.ecart(it), y, 0, true));
+              .forEach((it) => ctx.poser(it, 320 + cote * 38 + (it.ct ? 1 : -1) * ctx.ecart(it), y, 0, true));
           });
         });
         ctx.comptes([]);
@@ -1397,6 +1397,7 @@
       <div class="commandes"><a class="btn btn-principal btn-grand" href="#${premier.id}">${progres[CHAPITRES[0].id] ? "Continuer" : "Commencer"} →</a></div>
       <ol class="liste-chapitres">${CHAPITRES.map((c, i) => `<li><a href="#${c.id}">${i + 1}. ${c.titre}</a>${progres[c.id] ? " ✓" : ""}</li>`).join("")}
         <li><a href="#trace">La trace écrite</a></li></ol>
+      <p class="credit-parcours">Application libre (GPL v3), vibecodée avec Claude (Anthropic).</p>
     </article>`;
   }
 

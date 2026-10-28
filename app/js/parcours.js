@@ -51,110 +51,255 @@
     const s = [a1, a2].sort().join("");
     return { AA: "A", AO: "A", BB: "B", BO: "B", AB: "AB", OO: "O" }[s];
   }
-  const LOCUS_ABO = Chromosome.locus("9", "q34.2") || 0.93;
+  // gène ABO : chr9 vers 133,26 Mb sur 138,4 Mb (GRCh38), bande q34.2
+  const LOCUS_ABO = 133.26 / 138.4;
 
   /* ======================================================================
    * EXPÉRIENCES
    * ==================================================================== */
 
-  /* 1. Du corps à l'ADN : un zoom en 6 niveaux */
+  /* 1. De l'organisme à l'ADN : un zoom en 7 niveaux.
+   * Schémas : légendes hors de la figure, alignées en colonne à droite,
+   * traits de rappel horizontaux sans flèche. */
   const NIVEAUX = [
-    { nom: "Le corps", texte: "Le corps humain est formé de milliards de <b>cellules</b>. On zoome sur un petit morceau de peau." },
-    { nom: "Les cellules", texte: "Au microscope, on voit les <b>cellules</b>. Presque chacune possède un <b>noyau</b> (en violet)." },
-    { nom: "Une cellule", texte: "Une cellule : une <b>membrane</b>, du <b>cytoplasme</b> et un <b>noyau</b>." },
-    { nom: "Le noyau", texte: "Le noyau contient les <b>chromosomes</b>. On les voit bien quand la cellule se divise : ils sont alors courts et épais." },
-    { nom: "Un chromosome", texte: "Un chromosome est formé d'une très longue molécule d'<b>ADN</b>, enroulée sur elle-même. Ici, le chromosome 9." },
-    { nom: "L'ADN et un gène", texte: "L'ADN ressemble à une échelle tordue (une double hélice). Une portion d'ADN qui porte une information précise s'appelle un <b>gène</b> (en jaune)." },
+    { nom: "L'organisme", texte: "Un <b>organisme</b> (ici, un être humain) est formé de milliards de <b>cellules</b>. On zoome sur un petit morceau de peau." },
+    { nom: "Un tissu", texte: "Au microscope, la peau est formée de <b>cellules</b> collées les unes aux autres : elles forment un <b>tissu</b>. Presque chaque cellule possède un <b>noyau</b>." },
+    { nom: "Une cellule", texte: "Une cellule est limitée par une <b>membrane</b>. Elle contient du <b>cytoplasme</b> et un <b>noyau</b>." },
+    { nom: "Le noyau", texte: "Le noyau contient les <b>chromosomes</b> : 46 chez l'être humain. On les voit bien quand la cellule se divise : ils sont alors courts et épais." },
+    { nom: "Un chromosome", texte: "Un chromosome contient une très longue molécule d'<b>ADN</b>, très enroulée. Sur le chromosome 9, près de l'extrémité du bras long, se trouve le <b>gène</b> qui détermine le groupe sanguin. <small>(Ce chromosome a été copié avant une division : on voit deux chromatides, voir chapitre 5.)</small>" },
+    { nom: "L'ADN et un gène", texte: "Déroulé, l'ADN ressemble à une échelle tordue : une <b>double hélice</b>. Une portion d'ADN qui porte une information précise est un <b>gène</b> (en jaune)." },
+    { nom: "Les nucléotides", texte: "L'ADN est une chaîne de petites molécules, les <b>nucléotides</b>, de 4 sortes : A, T, C et G. Chaque barreau de l'échelle est formé de deux nucléotides face à face : A avec T, C avec G. L'ordre des nucléotides forme l'<b>information génétique</b>." },
   ];
+  const VB = "0 0 360 240";
+  const COL_LEGENDES = 250; // x de la colonne des légendes
+
+  // légendes : [{ texte, x, y }] (x, y : point visé) → traits horizontaux + textes alignés
+  function legendes(liste) {
+    return liste.map((l) => {
+      const lignes = l.texte.split("\n");
+      return `<line x1="${l.x.toFixed(1)}" y1="${l.y.toFixed(1)}" x2="${COL_LEGENDES - 6}" y2="${l.y.toFixed(1)}" class="trait"/>`
+        + lignes.map((t, i) => `<text x="${COL_LEGENDES}" y="${(l.y + 4.5 + (i - (lignes.length - 1) / 2) * 15).toFixed(1)}" class="leg">${t}</text>`).join("");
+    }).join("");
+  }
+
+  // bord droit d'un polygone à la hauteur y
+  function bordDroit(poly, y) {
+    let x = -Infinity;
+    poly.forEach((a, i) => {
+      const b = poly[(i + 1) % poly.length];
+      if ((a[1] - y) * (b[1] - y) <= 0 && a[1] !== b[1]) x = Math.max(x, a[0] + ((y - a[1]) / (b[1] - a[1])) * (b[0] - a[0]));
+    });
+    return x;
+  }
+
+  /* Tissu : cellules jointives (diagramme de Voronoï d'une grille déformée). */
+  const TISSU = (function () {
+    const r = Chromosome.aleatoire(11);
+    const germes = [];
+    for (let j = 0; j < 6; j++) for (let i = 0; i < 6; i++) {
+      germes.push([-12 + i * 54 + (j % 2) * 27 + (r() - 0.5) * 20, -12 + j * 52 + (r() - 0.5) * 18]);
+    }
+    const cellules = germes.map((s, k) => {
+      let poly = [[-40, -40], [400, -40], [400, 280], [-40, 280]];
+      germes.forEach((t, m) => {
+        if (m === k) return;
+        const mx = (s[0] + t[0]) / 2, my = (s[1] + t[1]) / 2, dx = t[0] - s[0], dy = t[1] - s[1];
+        const f = (p) => (p[0] - mx) * dx + (p[1] - my) * dy;
+        const res = [];
+        poly.forEach((a, i) => {
+          const b = poly[(i + 1) % poly.length];
+          const fa = f(a), fb = f(b);
+          if (fa <= 0) res.push(a);
+          if (fa * fb < 0) { const u = fa / (fa - fb); res.push([a[0] + u * (b[0] - a[0]), a[1] + u * (b[1] - a[1])]); }
+        });
+        poly = res;
+      });
+      const c = poly.reduce((acc, p) => [acc[0] + p[0] / poly.length, acc[1] + p[1] / poly.length], [0, 0]);
+      return { poly, c, rx: 10 + r() * 2, ry: 7.5 + r() * 1.5, a: Math.round(r() * 180) };
+    });
+    let choisie = 0;
+    cellules.forEach((c, k) => { if (Math.hypot(c.c[0] - 125, c.c[1] - 120) < Math.hypot(cellules[choisie].c[0] - 125, cellules[choisie].c[1] - 120)) choisie = k; });
+    return { cellules, choisie };
+  })();
+  const pts = (poly) => poly.map((p) => p[0].toFixed(1) + "," + p[1].toFixed(1)).join(" ");
+
+  /* Noyau : chromosomes placés au hasard (graine fixe), entièrement dans le noyau et sans se chevaucher. */
+  const NOYAU = { cx: 128, cy: 120, r: 104 };
+  const DANS_NOYAU = (function () {
+    const r = Chromosome.aleatoire(5);
+    const classes = ["1", "2", "3", "5", "7", "9", "11", "12", "16", "18", "20", "21", "X"];
+    const poses = [];
+    const distSeg = (a, b) => {
+      const d = (p, s) => {
+        const vx = s[2] - s[0], vy = s[3] - s[1];
+        const t = Math.max(0, Math.min(1, ((p[0] - s[0]) * vx + (p[1] - s[1]) * vy) / (vx * vx + vy * vy || 1)));
+        return Math.hypot(p[0] - s[0] - t * vx, p[1] - s[1] - t * vy);
+      };
+      return Math.min(d([a[0], a[1]], b), d([a[2], a[3]], b), d([b[0], b[1]], a), d([b[2], b[3]], a));
+    };
+    for (const c of classes) {
+      const k = chromo(c, { echelle: 0.48 });
+      const demi = k.L / 2;
+      for (let essai = 0; essai < 400; essai++) {
+        const ang = r() * Math.PI;
+        const x = NOYAU.cx + (r() - 0.5) * 2 * NOYAU.r, y = NOYAU.cy + (r() - 0.5) * 2 * NOYAU.r;
+        const s = [x - Math.sin(ang) * demi, y - Math.cos(ang) * demi, x + Math.sin(ang) * demi, y + Math.cos(ang) * demi];
+        const marge = NOYAU.r - 10;
+        if (Math.hypot(s[0] - NOYAU.cx, s[1] - NOYAU.cy) > marge || Math.hypot(s[2] - NOYAU.cx, s[3] - NOYAU.cy) > marge) continue;
+        if (poses.some((p) => distSeg(p.s, s) < 22)) continue;
+        poses.push({ c, k, x, y, deg: (-ang * 180) / Math.PI, s });
+        break;
+      }
+    }
+    return poses;
+  })();
 
   function dessinNiveau(n) {
+    const svg = (label, contenu) => `<svg viewBox="${VB}" class="zoom-svg" role="img" aria-label="${label}">${contenu}</svg>`;
     if (n === 0) {
-      return `<svg viewBox="0 0 300 220" class="zoom-svg" role="img" aria-label="Silhouette humaine">
+      return svg("Silhouette d'un être humain", `
         <g fill="#c9d6e2" stroke="#7d93a8" stroke-width="2">
-          <circle cx="150" cy="38" r="22"/>
-          <rect x="122" y="64" width="56" height="78" rx="18"/>
-          <rect x="96" y="68" width="20" height="70" rx="10"/><rect x="184" y="68" width="20" height="70" rx="10"/>
-          <rect x="126" y="136" width="20" height="74" rx="10"/><rect x="154" y="136" width="20" height="74" rx="10"/>
+          <circle cx="150" cy="40" r="22"/>
+          <rect x="122" y="66" width="56" height="80" rx="18"/>
+          <rect x="96" y="70" width="20" height="72" rx="10"/><rect x="184" y="70" width="20" height="72" rx="10"/>
+          <rect x="126" y="140" width="20" height="80" rx="10"/><rect x="154" y="140" width="20" height="80" rx="10"/>
         </g>
-        <rect x="183" y="100" width="22" height="22" fill="none" stroke="#e0a020" stroke-width="3" rx="3"/>
-      </svg>`;
+        <rect x="183" y="102" width="22" height="22" fill="none" stroke="#e0a020" stroke-width="3" rx="3"/>
+        ${legendes([{ texte: "un morceau\nde peau", x: 205, y: 113 }])}`);
     }
     if (n === 1) {
+      const t = TISSU;
       let c = "";
-      for (let i = 0; i < 6; i++) for (let j = 0; j < 4; j++) {
-        const x = 30 + i * 46 + (j % 2) * 23;
-        const y = 30 + j * 48;
-        const choisi = i === 3 && j === 1;
-        c += `<g><rect x="${x - 21}" y="${y - 22}" width="42" height="44" rx="12" fill="#f6e6ec" stroke="${choisi ? "#e0a020" : "#d4a7b8"}" stroke-width="${choisi ? 3 : 1.5}"/>
-          <circle cx="${x}" cy="${y}" r="8" fill="#8e6bb8"/></g>`;
-      }
-      return `<svg viewBox="0 0 300 220" class="zoom-svg" role="img" aria-label="Des cellules avec leur noyau">${c}</svg>`;
+      t.cellules.forEach((k, i) => {
+        if (i === t.choisie) return;
+        c += `<polygon points="${pts(k.poly)}" fill="#f6e6ec" stroke="#b07a92" stroke-width="1.6" stroke-linejoin="round"/>
+          <ellipse cx="${k.c[0].toFixed(1)}" cy="${k.c[1].toFixed(1)}" rx="${k.rx.toFixed(1)}" ry="${k.ry.toFixed(1)}" transform="rotate(${k.a} ${k.c[0].toFixed(1)} ${k.c[1].toFixed(1)})" fill="#8e6bb8"/>`;
+      });
+      const ch = t.cellules[t.choisie];
+      c += `<polygon points="${pts(ch.poly)}" fill="#f6e6ec" stroke="#e0a020" stroke-width="3" stroke-linejoin="round"/>
+        <ellipse cx="${ch.c[0].toFixed(1)}" cy="${ch.c[1].toFixed(1)}" rx="${ch.rx.toFixed(1)}" ry="${ch.ry.toFixed(1)}" transform="rotate(${ch.a} ${ch.c[0].toFixed(1)} ${ch.c[1].toFixed(1)})" fill="#8e6bb8"/>`;
+      const yCell = ch.c[1] - 19;
+      const leg = legendes([
+        { texte: "une cellule", x: bordDroit(ch.poly, yCell) - 1, y: yCell },
+        { texte: "son noyau", x: ch.c[0] + ch.rx * 0.4, y: ch.c[1] },
+      ]);
+      return `<div class="zoom-duo">${svg("Un tissu : des cellules jointives avec leur noyau", `<svg x="0" y="0" width="244" height="240" viewBox="0 0 244 240">${c}</svg><line x1="244" y1="0" x2="244" y2="240" stroke="#e6def3"/>${leg}`)}
+        <figure class="zoom-photo"><img src="img/epiderme-grenouille.jpg" alt="Photographie au microscope : cellules de la peau d'une grenouille, collées les unes aux autres, chacune avec un noyau violet" width="960" height="541">
+        <figcaption>Photographie au microscope : cellules de la peau d'une grenouille (colorées). Notre peau est organisée de la même façon. <small>Berkshire Community College, CC0, via Wikimedia Commons.</small></figcaption></figure></div>`;
     }
     if (n === 2) {
-      return `<svg viewBox="0 0 300 220" class="zoom-svg" role="img" aria-label="Une cellule">
-        <ellipse cx="150" cy="110" rx="128" ry="92" fill="#f6e6ec" stroke="#c48aa0" stroke-width="3"/>
-        <circle cx="160" cy="105" r="42" fill="#d9c8ec" stroke="#8e6bb8" stroke-width="3"/>
-        <text x="40" y="200" class="leg">membrane</text><text x="44" y="120" class="leg">cytoplasme</text><text x="205" y="62" class="leg">noyau</text>
-      </svg>`;
+      // la cellule choisie dans le tissu, agrandie
+      const ch = TISSU.cellules[TISSU.choisie];
+      const xs = ch.poly.map((p) => p[0]), ys = ch.poly.map((p) => p[1]);
+      const x0 = Math.min(...xs), y0 = Math.min(...ys);
+      const e = Math.min(210 / (Math.max(...xs) - x0), 210 / (Math.max(...ys) - y0));
+      const ox = 20 + (210 - (Math.max(...xs) - x0) * e) / 2, oy = 15 + (210 - (Math.max(...ys) - y0) * e) / 2;
+      const poly = ch.poly.map((p) => [ox + (p[0] - x0) * e, oy + (p[1] - y0) * e]);
+      const nx = ox + (ch.c[0] - x0) * e, ny = oy + (ch.c[1] - y0) * e;
+      const nrx = ch.rx * e * 0.9, nry = ch.ry * e * 0.9;
+      const haut = Math.min(...poly.map((p) => p[1])), bas = Math.max(...poly.map((p) => p[1]));
+      const yMemb = haut + (ny - nry - haut) * 0.45;
+      const yCyto = ny + nry + (bas - ny - nry) * 0.45;
+      return svg("Une cellule : membrane, cytoplasme, noyau", `
+        <polygon points="${pts(poly)}" fill="#f6e6ec" stroke="#b07a92" stroke-width="4" stroke-linejoin="round"/>
+        <ellipse cx="${nx.toFixed(1)}" cy="${ny.toFixed(1)}" rx="${nrx.toFixed(1)}" ry="${nry.toFixed(1)}" transform="rotate(${ch.a} ${nx.toFixed(1)} ${ny.toFixed(1)})" fill="#d9c8ec" stroke="#8e6bb8" stroke-width="3"/>
+        ${legendes([
+          { texte: "membrane", x: bordDroit(poly, yMemb) - 1, y: yMemb },
+          { texte: "noyau", x: nx + nry * 0.3, y: ny },
+          { texte: "cytoplasme", x: bordDroit(poly, yCyto) - 30, y: yCyto },
+        ])}`);
     }
     if (n === 3) {
-      const cl = ["1", "2", "5", "9", "12", "17", "21", "X"];
       let im = "";
-      cl.forEach((c, i) => {
-        const k = chromo(c, { echelle: 0.32 });
-        const x = 95 + (i % 4) * 36 + (i > 3 ? 12 : 0);
-        const y = 68 + Math.floor(i / 4) * 64;
-        im += `<image href="${k.url}" x="${x}" y="${y}" width="${k.w}" height="${k.h}" transform="rotate(${(i * 37) % 50 - 25} ${x + k.w / 2} ${y + k.h / 2})"/>`;
-      });
-      return `<svg viewBox="0 0 300 220" class="zoom-svg" role="img" aria-label="Le noyau et ses chromosomes">
-        <circle cx="150" cy="110" r="98" fill="#e9dff5" stroke="#8e6bb8" stroke-width="3"/>${im}
-        <text x="10" y="214" class="leg">… et beaucoup d'autres : 46 en tout</text></svg>`;
+      for (const p of DANS_NOYAU) {
+        im += `<image href="${p.k.url}" x="${(p.x - p.k.w / 2).toFixed(1)}" y="${(p.y - p.k.h / 2).toFixed(1)}" width="${p.k.w}" height="${p.k.h}" transform="rotate(${p.deg.toFixed(1)} ${p.x.toFixed(1)} ${p.y.toFixed(1)})"/>`;
+      }
+      // trait de rappel vers le chromosome le plus à droite
+      const cible = DANS_NOYAU.reduce((a, b) => (b.x > a.x ? b : a));
+      const yNoyau = NOYAU.cy + NOYAU.r * 0.72;
+      return svg("Le noyau et ses chromosomes", `
+        <circle cx="${NOYAU.cx}" cy="${NOYAU.cy}" r="${NOYAU.r}" fill="#e9dff5" stroke="#8e6bb8" stroke-width="3"/>${im}
+        ${legendes([
+          { texte: "chromosome", x: cible.x, y: cible.y },
+          { texte: "noyau", x: NOYAU.cx + Math.sqrt(NOYAU.r ** 2 - (yNoyau - NOYAU.cy) ** 2) - 6, y: yNoyau },
+        ])}
+        <text x="${COL_LEGENDES}" y="30" class="leg-note">(${DANS_NOYAU.length} des</text><text x="${COL_LEGENDES}" y="45" class="leg-note">46 chromosomes)</text>`);
     }
     if (n === 4) {
-      const k = chromo("9", { echelle: 1.05 });
-      const yg = k.pad + LOCUS_ABO * k.L;
-      return `<svg viewBox="0 0 300 220" class="zoom-svg" role="img" aria-label="Le chromosome 9">
-        <g transform="translate(${150 - (k.h * 0.95) / 2}, 128) rotate(-90) scale(0.95)">
-          <image href="${k.url}" x="-${k.w / 2}" y="0" width="${k.w}" height="${k.h}"/>
-          <rect x="${-k.w / 2 - 2}" y="${yg - 3}" width="${k.w + 4}" height="6" fill="#f4c430" opacity=".85"/>
-        </g>
-        <text x="${150 + (k.h * 0.95) / 2 - (k.h - yg) * 0.95 - 20}" y="170" class="leg">un gène</text>
-        <text x="20" y="40" class="leg">chromosome 9</text></svg>`;
+      const k = chromo("9", { echelle: 1 });
+      const e = 216 / k.h;
+      const w = k.w * e, h = k.h * e;
+      const x = 110 - w / 2, y = 12;
+      const yG = y + (k.pad + LOCUS_ABO * k.L) * e;
+      const yC = y + (k.pad + window.BANDES["9"].centro * k.L) * e;
+      const bord = 110 + w * 0.32;
+      return svg("Le chromosome 9 et le gène du groupe sanguin", `
+        <image href="${k.url}" x="${x.toFixed(1)}" y="${y}" width="${w.toFixed(1)}" height="${h.toFixed(1)}"/>
+        <rect x="${(110 - w * 0.36).toFixed(1)}" y="${(yG - 1.5).toFixed(1)}" width="${(w * 0.72).toFixed(1)}" height="3" fill="#f4c430" stroke="#8a6500" stroke-width=".7"/>
+        ${legendes([
+          { texte: "bras court", x: bord, y: y + (k.pad + window.BANDES["9"].centro * k.L * 0.5) * e },
+          { texte: "centromère", x: 110 + w * 0.12, y: yC },
+          { texte: "bras long", x: bord, y: y + (k.pad + (0.5 + window.BANDES["9"].centro / 2) * k.L) * e },
+          { texte: "gène du groupe\nsanguin (ABO)", x: 110 + w * 0.36, y: yG },
+        ])}`);
     }
-    // n === 5 : double hélice
-    let brins = "";
-    let barreaux = "";
-    for (let x = 10; x <= 290; x += 2) {
-      const y1 = 110 + 40 * Math.sin(x / 22);
-      const y2 = 110 - 40 * Math.sin(x / 22);
-      brins += `${x === 10 ? "M" : "L"}${x},${y1.toFixed(1)} `;
-      if (x % 12 === 0) {
-        const gene = x >= 130 && x <= 210;
-        barreaux += `<line x1="${x}" y1="${y1.toFixed(1)}" x2="${x}" y2="${y2.toFixed(1)}" stroke="${gene ? "#e0a020" : "#9bb0c4"}" stroke-width="${gene ? 4 : 3}"/>`;
+    if (n === 5) {
+      // double hélice, gène surligné
+      const X0 = 12, X1 = 236, YM = 120, A = 46;
+      let b1 = "", b2 = "", barreaux = "";
+      for (let x = X0; x <= X1; x += 2) {
+        const s = Math.sin((x - X0) / 20);
+        b1 += `${x === X0 ? "M" : "L"}${x},${(YM + A * s).toFixed(1)} `;
+        b2 += `${x === X0 ? "M" : "L"}${x},${(YM - A * s).toFixed(1)} `;
+        if (x % 10 === 0) barreaux += `<line x1="${x}" y1="${(YM + A * s).toFixed(1)}" x2="${x}" y2="${(YM - A * s).toFixed(1)}" stroke="#9bb0c4" stroke-width="3"/>`;
       }
+      return svg("La double hélice d'ADN et un gène", `
+        <rect x="100" y="${YM - A - 10}" width="86" height="${2 * A + 20}" rx="8" fill="#fff1b8" stroke="#e0a020" stroke-width="2"/>
+        ${barreaux}<path d="${b1}" fill="none" stroke="#1d5f8a" stroke-width="4"/><path d="${b2}" fill="none" stroke="#1d5f8a" stroke-width="4"/>
+        ${legendes([
+          { texte: "ADN (double\nhélice)", x: X1 + 2, y: YM + A * Math.sin((X1 - X0) / 20) },
+          { texte: "un gène", x: 186, y: YM + A + 4 },
+        ])}`);
     }
-    let brin2 = "";
-    for (let x = 10; x <= 290; x += 2) brin2 += `${x === 10 ? "M" : "L"}${x},${(110 - 40 * Math.sin(x / 22)).toFixed(1)} `;
-    return `<svg viewBox="0 0 300 220" class="zoom-svg" role="img" aria-label="La double hélice d'ADN et un gène">
-      <rect x="126" y="56" width="88" height="108" rx="10" fill="#fff4c9"/>
-      ${barreaux}<path d="${brins}" fill="none" stroke="#1d5f8a" stroke-width="4"/><path d="${brin2}" fill="none" stroke="#1d5f8a" stroke-width="4"/>
-      <text x="150" y="186" class="leg">un gène</text><text x="14" y="40" class="leg">ADN</text></svg>`;
+    // n === 6 : nucléotides (échelle redressée)
+    const COUL = { A: "#2a9d8f", T: "#e76f51", C: "#457b9d", G: "#d4a017" };
+    const PAIRE = { A: "T", T: "A", C: "G", G: "C" };
+    const haut = "ATGCCG".split("");
+    const Y1 = 46, Y2 = 194, YM = (Y1 + Y2) / 2;
+    let c = `<line x1="14" y1="${Y1}" x2="238" y2="${Y1}" stroke="#1d5f8a" stroke-width="6" stroke-linecap="round"/>
+      <line x1="14" y1="${Y2}" x2="238" y2="${Y2}" stroke="#1d5f8a" stroke-width="6" stroke-linecap="round"/>`;
+    haut.forEach((b, i) => {
+      const x = 32 + i * 38, bas = PAIRE[b];
+      c += `<rect x="${x - 11}" y="${Y1}" width="22" height="${YM - Y1 - 2}" rx="4" fill="${COUL[b]}"/>
+        <rect x="${x - 11}" y="${YM + 2}" width="22" height="${Y2 - YM - 2}" rx="4" fill="${COUL[bas]}"/>
+        <text x="${x}" y="${(Y1 + YM) / 2 + 6}" class="base">${b}</text><text x="${x}" y="${(YM + Y2) / 2 + 6}" class="base">${bas}</text>`;
+    });
+    // un nucléotide entouré : un morceau de montant + un demi-barreau
+    const xn = 32 + 5 * 38;
+    c += `<rect x="${xn - 18}" y="${Y1 - 9}" width="36" height="${YM - Y1 + 8}" rx="6" fill="none" stroke="#222" stroke-width="1.8" stroke-dasharray="5 4"/>`;
+    return svg("Les nucléotides de l'ADN : A face à T, C face à G", c + legendes([
+      { texte: "un brin d'ADN", x: 238, y: Y2 },
+      { texte: "un nucléotide", x: xn + 18, y: Y1 + 16 },
+      { texte: "un barreau :\n2 nucléotides\nface à face", x: xn + 11, y: YM + 30 },
+    ]));
   }
 
   function expZoom(el) {
     let n = 0;
     el.innerHTML = `<div class="zoom">
-      <div class="zoom-image" aria-live="polite"></div>
+      <div class="zoom-image" aria-live="polite" title="Clique pour zoomer"></div>
       <p class="zoom-texte"></p>
       <div class="zoom-commandes">
         <button class="btn" data-z="-1">− Dézoomer</button>
         <div class="zoom-points"></div>
         <button class="btn btn-principal" data-z="1">Zoomer +</button>
-      </div></div>`;
+      </div>
+      <p class="zoom-astuce">Astuce : clique sur l'image pour zoomer.</p></div>`;
     const points = $(".zoom-points", el);
     points.innerHTML = NIVEAUX.map((v, i) => `<button class="point" data-n="${i}" title="${v.nom}" aria-label="${v.nom}"></button>`).join("");
     function maj() {
       $(".zoom-image", el).innerHTML = `<div class="zoom-niveau">${n + 1} / ${NIVEAUX.length} · ${NIVEAUX[n].nom}</div>` + dessinNiveau(n);
+      $(".zoom-image", el).classList.toggle("dernier", n === NIVEAUX.length - 1);
       $(".zoom-texte", el).innerHTML = NIVEAUX[n].texte;
       $$(".point", el).forEach((p, i) => p.classList.toggle("actif", i === n));
       $('[data-z="-1"]', el).disabled = n === 0;
@@ -165,6 +310,7 @@
       const p = e.target.closest("[data-n]");
       if (z) n = Math.max(0, Math.min(NIVEAUX.length - 1, n + +z.dataset.z));
       else if (p) n = +p.dataset.n;
+      else if (e.target.closest(".zoom-svg, .zoom-photo") && n < NIVEAUX.length - 1) n++;
       else return;
       maj();
     });
@@ -743,7 +889,7 @@
       id: "ch1", titre: "Où se trouve l'information génétique ?",
       decouvre: `<p>Tu ressembles à tes parents, mais tu es unique. Les caractères qui se transmettent des parents aux enfants (groupe sanguin, forme du lobe de l'oreille…) sont des <b>caractères héréditaires</b>.</p>
         <p>L'information qui détermine ces caractères est l'<b>information génétique</b>. Mais où se trouve-t-elle dans notre corps ?</p>`,
-      experiences: [{ titre: "Zoome du corps jusqu'à l'ADN", faire: expZoom }],
+      experiences: [{ titre: "Zoome de l'organisme jusqu'à l'ADN", faire: expZoom }],
       questions: [
         { q: "Où se trouvent les chromosomes ?", options: ["Dans le sang seulement", "Dans le noyau des cellules", "Dans le cerveau seulement"], bonne: 1,
           expl: "Les chromosomes sont dans le noyau de presque toutes les cellules du corps." },
@@ -752,7 +898,7 @@
         { q: "Un gène, c'est…", options: ["une cellule", "une portion d'ADN qui porte une information", "un chromosome entier"], bonne: 1,
           expl: "Un gène est une portion d'un chromosome (donc d'ADN). Chaque chromosome porte de nombreux gènes." },
       ],
-      retiens: `<p>Le corps est formé de <b>cellules</b>. Le <b>noyau</b> de chaque cellule contient des <b>chromosomes</b>.</p>
+      retiens: `<p>Un organisme est formé de <b>cellules</b>. Le <b>noyau</b> de chaque cellule contient des <b>chromosomes</b>.</p>
         <p>Un chromosome est formé d'une longue molécule d'<b>ADN</b>. Une portion d'ADN qui détermine un caractère héréditaire est un <b>gène</b>.</p>
         <p>L'ADN est le support de l'<b>information génétique</b>.</p>`,
     },
@@ -934,7 +1080,7 @@
       </div>
 
       <h2>1. Où se trouve l'information génétique ?</h2>
-      <p>Notre corps est formé de milliards de <b>cellules</b>. Le <b>noyau</b> de chaque cellule contient des <b>chromosomes</b>. Chaque chromosome est formé d'une très longue molécule d'<b>ADN</b>. L'ADN est le support de l'<b>information génétique</b> : il détermine nos <b>caractères héréditaires</b>, ceux qui se transmettent des parents aux enfants.</p>
+      <p>Notre organisme est formé de milliards de <b>cellules</b>. Le <b>noyau</b> de chaque cellule contient des <b>chromosomes</b>. Chaque chromosome est formé d'une très longue molécule d'<b>ADN</b>. L'ADN est le support de l'<b>information génétique</b> : il détermine nos <b>caractères héréditaires</b>, ceux qui se transmettent des parents aux enfants.</p>
 
       <h2>2. Le caryotype : 46 chromosomes, 23 paires</h2>
       <p>Pour étudier les chromosomes, on les photographie dans une cellule en division, puis on les classe par paires, du plus grand au plus petit : c'est le <b>caryotype</b>.</p>
@@ -1014,7 +1160,7 @@
 
       <section class="bloc bloc-verifie"><h2><span class="pastille">3</span>Je vérifie</h2><div class="questions"></div></section>
 
-      <section class="bloc bloc-retiens"><h2><span class="pastille">4</span>Je retiens</h2>${ch.retiens}</section>
+      <section class="bloc bloc-retiens"><h2><span class="pastille">4</span>Je retiens</h2><div class="retiens"></div></section>
 
       <div class="fin-chapitre${progres[ch.id] ? " visible" : ""}"><p>Chapitre réussi ✓</p></div>
       <nav class="chap-nav">
@@ -1024,13 +1170,133 @@
     </article>`;
     ch.experiences.forEach((x, i) => x.faire($(`.exp[data-x="${i}"]`, main)));
     rendreQuestions($(".questions", main), ch);
+    rendreRetiens($(".retiens", main), ch);
+  }
+
+  /* « Je retiens » : le bilan est à compléter en glissant les mots en gras
+   * (ou en touchant un mot puis un trou). Un mot faux revient à sa place. */
+  function rendreRetiens(zone, ch) {
+    const modele = document.createElement("div");
+    modele.innerHTML = ch.retiens;
+    const mots = [];
+    $$("b", modele).forEach((b) => {
+      const trou = document.createElement("span");
+      trou.className = "trou";
+      trou.dataset.mot = b.textContent;
+      trou.setAttribute("role", "button");
+      trou.setAttribute("aria-label", "Trou à compléter");
+      trou.tabIndex = 0;
+      b.replaceWith(trou);
+      mots.push(b.textContent);
+    });
+    // banque de mots mélangée (graine fixe : même ordre à chaque visite)
+    const r = Chromosome.aleatoire(mots.length * 31 + ch.id.length);
+    const banque = mots.slice();
+    for (let i = banque.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [banque[i], banque[j]] = [banque[j], banque[i]]; }
+    zone.innerHTML = `<p class="retiens-consigne">Complète le bilan : glisse chaque mot dans le bon trou (ou touche un mot, puis un trou).</p>
+      <div class="banque">${banque.map((m) => `<button class="mot" type="button">${m}</button>`).join("")}</div>
+      <div class="retiens-texte"></div>
+      <p class="retiens-fin" aria-live="polite"></p>
+      <button class="lien retiens-solution" type="button">Afficher le bilan complet</button>`;
+    $(".retiens-texte", zone).append(...modele.childNodes);
+    let choisi = null;
+
+    function choisir(m) {
+      $$(".mot.choisi", zone).forEach((x) => x.classList.remove("choisi"));
+      choisi = m;
+      if (m) m.classList.add("choisi");
+    }
+    function remplir(trou, mot) {
+      trou.textContent = trou.dataset.mot;
+      trou.classList.add("rempli");
+      trou.removeAttribute("tabindex");
+      trou.removeAttribute("role");
+      if (mot) mot.remove();
+    }
+    function terminer() {
+      if ($$(".trou:not(.rempli)", zone).length) return;
+      $(".banque", zone).remove();
+      $(".retiens-consigne", zone).remove();
+      $(".retiens-solution", zone).remove();
+      $(".retiens-fin", zone).textContent = "Bilan complet ✓ Tu peux le recopier dans ton cahier.";
+    }
+    function essayer(trou, mot) {
+      if (!trou || !mot || trou.classList.contains("rempli")) return;
+      if (mot.textContent === trou.dataset.mot) {
+        remplir(trou, mot);
+        choisir(null);
+        terminer();
+      } else {
+        trou.classList.add("erreur");
+        mot.classList.add("erreur");
+        setTimeout(() => { trou.classList.remove("erreur"); mot.classList.remove("erreur"); }, 500);
+      }
+    }
+
+    // glisser-déposer (souris et doigt)
+    let glisse = null;
+    zone.addEventListener("pointerdown", (e) => {
+      const m = e.target.closest(".mot");
+      if (!m) return;
+      e.preventDefault();
+      glisse = { m, x0: e.clientX, y0: e.clientY, fantome: null };
+      try { m.setPointerCapture(e.pointerId); } catch (err) { /* pointeur déjà relâché */ }
+    });
+    zone.addEventListener("pointermove", (e) => {
+      if (!glisse) return;
+      if (!glisse.fantome && Math.hypot(e.clientX - glisse.x0, e.clientY - glisse.y0) > 6) {
+        glisse.fantome = glisse.m.cloneNode(true);
+        glisse.fantome.classList.add("fantome");
+        document.body.append(glisse.fantome);
+        glisse.m.classList.add("en-cours");
+      }
+      if (glisse.fantome) {
+        glisse.fantome.style.left = e.clientX + "px";
+        glisse.fantome.style.top = e.clientY + "px";
+        $$(".trou.survol", zone).forEach((t) => t.classList.remove("survol"));
+        const sous = document.elementFromPoint(e.clientX, e.clientY);
+        const t = sous && sous.closest(".trou:not(.rempli)");
+        if (t) t.classList.add("survol");
+      }
+    });
+    const lacher = (e) => {
+      if (!glisse) return;
+      const { m, fantome } = glisse;
+      glisse = null;
+      if (fantome) {
+        fantome.remove();
+        m.classList.remove("en-cours");
+        $$(".trou.survol", zone).forEach((t) => t.classList.remove("survol"));
+        const sous = document.elementFromPoint(e.clientX, e.clientY);
+        essayer(sous && sous.closest(".trou"), m);
+      } else {
+        choisir(choisi === m ? null : m); // simple toucher : on choisit le mot
+      }
+    };
+    zone.addEventListener("pointerup", lacher);
+    zone.addEventListener("pointercancel", () => {
+      if (glisse && glisse.fantome) { glisse.fantome.remove(); glisse.m.classList.remove("en-cours"); }
+      glisse = null;
+    });
+    zone.addEventListener("click", (e) => {
+      const t = e.target.closest(".trou");
+      if (t && choisi) essayer(t, choisi);
+      if (e.target.closest(".retiens-solution")) {
+        $$(".trou:not(.rempli)", zone).forEach((t) => remplir(t, null));
+        terminer();
+      }
+    });
+    zone.addEventListener("keydown", (e) => {
+      const t = e.target.closest(".trou");
+      if (t && choisi && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); essayer(t, choisi); }
+    });
   }
 
   function rendreAccueil(main) {
     const premier = CHAPITRES.find((c) => !progres[c.id]) || CHAPITRES[0];
     main.innerHTML = `<article class="chap accueil-parcours">
       <h1>Comprendre la génétique</h1>
-      <p class="intro">Pourquoi ressemble-t-on à ses parents tout en étant unique ? Ce parcours t'emmène du corps jusqu'à l'ADN, puis de la formation des gamètes jusqu'à la naissance d'un nouvel individu.</p>
+      <p class="intro">Pourquoi ressemble-t-on à ses parents tout en étant unique ? Ce parcours t'emmène de l'organisme jusqu'à l'ADN, puis de la formation des gamètes jusqu'à la naissance d'un nouvel individu.</p>
       <div class="mode-emploi">
         <div><span class="pastille">1</span><b>Je découvre</b><br>Un texte court pour comprendre.</div>
         <div><span class="pastille">2</span><b>J'expérimente</b><br>Je manipule et j'observe.</div>

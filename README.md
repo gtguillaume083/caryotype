@@ -88,3 +88,4 @@ Pour ajouter une photo de caryogramme : la placer dans `outils/sources/karyogram
   - 47,XY,+18 : Serra Amoros, CC BY-SA 4.0.
   - 45,X : Wikimedia Commons « 45,X.jpg », CC BY-SA 3.0.
   - 47,XXY : Wikimedia Commons « 47,XXY.jpg », CC BY-SA 3.0.
+- Photo de l'épiderme de grenouille (parcours, chapitre 1) : Berkshire Community College, « Epithelial Tissues Simple Squamous Epithelium (frog) », CC0, via Wikimedia Commons.

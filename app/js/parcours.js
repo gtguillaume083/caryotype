@@ -650,14 +650,14 @@
   /* mitose : les 6 chromosomes couchés sur la ligne du milieu (horizontale),
    * leurs deux chromatides tournées l'une vers le haut, l'autre vers le bas.
    * y(it) donne la hauteur de chaque chromatide. */
-  function plaque(ctx, y) {
+  function plaque(ctx, y, serre = 1) {
     const liste = [];
     PAIRES.forEach((c) => ["m", "p"].forEach((o) => liste.push(ctx.items.filter((it) => it.c === c && it.o === o))));
     const total = liste.reduce((s, its) => s + its[0].k.h, 0) + 8 * (liste.length - 1);
     let x = 320 - total / 2;
     for (const its of liste) {
       const h = its[0].k.h;
-      its.forEach((it) => ctx.poser(it, x + h / 2, y(it), 90, true));
+      its.forEach((it) => ctx.poser(it, 320 + (x + h / 2 - 320) * serre, y(it), 90, true));
       x += h + 8;
     }
   }
@@ -691,7 +691,7 @@
       texte: "<b>4. Les chromatides se séparent.</b> Les deux chromatides de chaque chromosome partent chacune vers un pôle de la cellule (en haut et en bas).",
       faire(ctx) {
         ctx.cellule(0, 320, 210, 250, 205, true);
-        plaque(ctx, (it) => 210 + (it.ct ? 1 : -1) * 120);
+        plaque(ctx, (it) => 210 + (it.ct ? 1 : -1) * 110, 0.62);
         ctx.comptes([]);
       },
     },
@@ -733,13 +733,13 @@
     {
       texte: "<b>3. Les chromosomes de chaque paire se séparent</b> : un part d'un côté, l'autre de l'autre côté. <b>Pour chaque paire, le côté est dû au hasard</b> (touche « Rejouer » pour voir une autre répartition).",
       faire(ctx) {
-        ctx.cellule(0, 320, 210, 215, 190, true);
+        ctx.cellule(0, 320, 210, 240, 195, true);
         PAIRES.forEach((c, ip) => {
-          const y = [85, 220, 325][ip];
+          const y = [100, 220, 320][ip];
           ["m", "p"].forEach((o) => {
             const cote = (o === "m" ? 0 : 1) === ctx.orientation[ip] ? -1 : 1;
             ctx.items.filter((it) => it.c === c && it.o === o)
-              .forEach((it) => ctx.poser(it, 320 + cote * 140 + (it.ct ? 1 : -1) * ctx.ecart(it), y, 0, true));
+              .forEach((it) => ctx.poser(it, 320 + cote * 105 + (it.ct ? 1 : -1) * ctx.ecart(it), y, 0, true));
           });
         });
         ctx.comptes([]);

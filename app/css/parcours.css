@@ -209,8 +209,24 @@ button.base:hover { border-color: var(--primaire); }
 .f-allele { position: absolute; left: calc(50% + 16px); transform: translateY(-50%); font-weight: 800; font-size: .85rem; background: #fff8dd; border: 1px solid #e0c060; border-radius: 5px; padding: 0 4px; }
 .f-gamete { min-height: 20px; }
 .f-g-titre { font-weight: 700; margin: 4px 0; }
-.f-g-cellule { display: inline-flex; gap: 14px; align-items: flex-end; background: #f6e6ec; border: 2px solid #c48aa0; border-radius: 50%; padding: 12px 24px; animation: apparait .35s; }
+.f-g-cellule { display: inline-flex; gap: 14px; align-items: flex-end; background: #f6e6ec; border: 2px solid #c48aa0; border-radius: 40px; padding: 14px 22px; animation: apparait .35s; }
 .f-oeuf { text-align: center; }
+/* écran étroit : la mère et le père restent côte à côte */
+@media (max-width: 620px) {
+  .f-parents { flex-wrap: nowrap; gap: 4px; }
+  .f-parent { flex: 1 1 0; min-width: 0; }
+  .f-parent .btn { font-size: .85rem; padding: 6px 8px; }
+  .f-parent .petit { font-size: .78rem; }
+  .f-signe { font-size: 1.5rem; }
+}
+@media (max-width: 400px) {
+  .f-signe { display: none; }
+  .f-cellule { padding: 10px 8px; border-radius: 22px; }
+  .f-ligne { gap: 34px; padding-right: 24px; }
+  .f-g-cellule { gap: 8px; padding: 12px 12px; border-radius: 26px; }
+  .f-g-cellule .f-ch + .f-ch { margin-left: 4px; }
+  .f-g-cellule .f-ch:nth-child(2) { margin-left: 24px; }
+}
 .f-oeuf h4 { font-size: 1.15rem; margin: 10px 0 6px; }
 .f-oeuf-cellule { display: inline-flex; animation: apparait .4s; }
 .f-compteurs { display: flex; flex-wrap: wrap; gap: 8px; }

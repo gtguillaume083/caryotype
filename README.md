@@ -28,7 +28,7 @@ Rien n'est envoyé sur Internet : pas de compte, pas de collecte de données. Le
 
 ## Utilisation
 
-- En ligne : la page publiée par GitLab Pages (voir `.gitlab-ci.yml`).
+- En ligne : **https://lambertguillaume.forge.apps.education.fr/caryotype/** (publiée par GitLab Pages, voir `.gitlab-ci.yml`).
 - Hors ligne : ouvrir `app/index.html` dans un navigateur (aucune installation, aucun serveur nécessaire).
 
 ## Structure

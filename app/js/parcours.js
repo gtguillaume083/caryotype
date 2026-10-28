@@ -650,15 +650,29 @@
   /* mitose : les 6 chromosomes couchés sur la ligne du milieu (horizontale),
    * leurs deux chromatides tournées l'une vers le haut, l'autre vers le bas.
    * y(it) donne la hauteur de chaque chromatide. */
-  function plaque(ctx, y, serre = 1) {
+  function plaque(ctx, y) {
     const liste = [];
     PAIRES.forEach((c) => ["m", "p"].forEach((o) => liste.push(ctx.items.filter((it) => it.c === c && it.o === o))));
     const total = liste.reduce((s, its) => s + its[0].k.h, 0) + 8 * (liste.length - 1);
     let x = 320 - total / 2;
     for (const its of liste) {
       const h = its[0].k.h;
-      its.forEach((it) => ctx.poser(it, 320 + (x + h / 2 - 320) * serre, y(it), 90, true));
+      its.forEach((it) => ctx.poser(it, x + h / 2, y(it), 90, true));
       x += h + 8;
+    }
+  }
+
+  /* anaphase : les chromatides, redressées, partent vers les pôles,
+   * centromère en avant (celles du bas sont retournées). */
+  function poles(ctx, yHaut, yBas) {
+    const liste = [];
+    PAIRES.forEach((c) => ["m", "p"].forEach((o) => liste.push(ctx.items.filter((it) => it.c === c && it.o === o))));
+    const total = liste.reduce((s, its) => s + its[0].k.w, 0) + 10 * (liste.length - 1);
+    let x = 320 - total / 2;
+    for (const its of liste) {
+      const w = its[0].k.w;
+      its.forEach((it) => ctx.poser(it, x + w / 2, it.ct ? yBas : yHaut, it.ct ? 180 : 0, true));
+      x += w + 10;
     }
   }
 
@@ -691,17 +705,17 @@
       texte: "<b>4. Les chromatides se séparent.</b> Les deux chromatides de chaque chromosome partent chacune vers un pôle de la cellule (en haut et en bas).",
       faire(ctx) {
         ctx.cellule(0, 320, 210, 250, 205, true);
-        plaque(ctx, (it) => 210 + (it.ct ? 1 : -1) * 110, 0.62);
+        poles(ctx, 112, 308);
         ctx.comptes([]);
       },
     },
     {
       texte: "<b>5. Deux cellules filles.</b> La cellule se coupe en deux. Chaque cellule fille reçoit <b>le même nombre de chromosomes</b> (6 ici, 46 en réalité) et <b>les mêmes informations génétiques</b> que la cellule de départ.",
       faire(ctx) {
-        ctx.cellule(0, 320, 108, 250, 98, true); ctx.cellule(1, 320, 322, 250, 98, true);
+        ctx.cellule(0, 320, 108, 190, 98, true); ctx.cellule(1, 320, 322, 190, 98, true);
         [2, 3].forEach((i) => ctx.cellule(i, 320, 210, 140, 135, false));
-        plaque(ctx, (it) => (it.ct ? 322 : 108));
-        ctx.comptes([[600, 112, "6 chrom."], [600, 326, "6 chrom."]]);
+        poles(ctx, 108, 322);
+        ctx.comptes([[580, 112, "6 chrom."], [580, 326, "6 chrom."]]);
       },
     },
   ];

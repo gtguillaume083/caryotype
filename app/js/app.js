@@ -678,6 +678,8 @@
     url.search = "";
     url.searchParams.set("p", encoder(conf));
     url.searchParams.set("code", etat.code);
+    const retourParcours = new URLSearchParams(location.search).get("retour");
+    if (retourParcours) url.searchParams.set("retour", retourParcours);
     if (solution) url.searchParams.set("cle", cle);
     history.replaceState(null, "", url);
     window.scrollTo(0, 0);
@@ -830,6 +832,13 @@
 
     // lien préparé par l'enseignant : ?p=…[&code=…][&cle=…]
     const params = new URLSearchParams(location.search);
+    // venu du parcours guidé : bouton de retour (seulement vers une page du site)
+    const retour = params.get("retour");
+    if (retour && /^parcours\.html(#[a-z0-9]+)?$/.test(retour)) {
+      const lien = $("#retour-parcours");
+      lien.href = retour;
+      lien.hidden = false;
+    }
     const conf = params.get("p") && decoder(params.get("p"));
     if (conf && Array.isArray(conf.cas) && ACTIVITES[conf.activite]) {
       demarrer(conf, params.get("code"), params.get("cle"));

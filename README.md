@@ -2,6 +2,30 @@
 
 Application web libre pour apprendre à **réaliser et analyser un caryotype humain** en SVT au collège (cycle 4).
 
+L'application a deux parties.
+
+## 1. Parcours guidé « Comprendre la génétique »
+
+Pour qu'un élève puisse tout comprendre et expérimenter seul. Chaque chapitre suit le même plan : **Je découvre** (texte court), **J'expérimente** (manipulation), **Je vérifie** (questions corrigées immédiatement), **Je retiens** (l'essentiel).
+
+| Chapitre | Expérience |
+|---|---|
+| 1. Où se trouve l'information génétique ? | Zoom du corps jusqu'à l'ADN et au gène |
+| 2. Les chromosomes et le caryotype | Caryotype XX / XY, origine maternelle ou paternelle de chaque chromosome, lien vers l'atelier |
+| 3. Gènes et allèles | Choisir les allèles du gène ABO (chromosome 9) et voir le groupe sanguin ; influence de l'environnement (hortensia) |
+| 4. Les mutations | Modifier une lettre de l'ADN et créer un nouvel allèle |
+| 5. La mitose | Animation pas à pas : copie de l'ADN, séparation des chromatides, deux cellules identiques |
+| 6. La méiose | Animation pas à pas (deux divisions) ; fabriquer ses gamètes (8 combinaisons pour 3 paires, 2²³ chez l'humain) |
+| 7. La fécondation | Former un ovule et un spermatozoïde au hasard, obtenir la cellule-œuf et le groupe sanguin, comparer plusieurs fécondations |
+| 8. La trisomie 21 | Provoquer une erreur de répartition et suivre ses conséquences, lien vers l'atelier |
+| Trace écrite | Leçon complète, schéma bilan, lexique, imprimable |
+
+La progression est gardée dans le navigateur de l'élève (rien n'est envoyé en ligne).
+
+Conformité au programme (BOEN n° 31 du 30 juillet 2020, cycle 4, « Le vivant et son évolution ») : diversité et stabilité génétique des individus ; ADN, mutations, brassage, gène, méiose et fécondation ; phénotype déterminé par le génotype et l'environnement.
+
+## 2. Atelier caryotype
+
 L'élève fait glisser les chromosomes d'une « lame de microscope » vers le caryogramme, puis répond aux questions de la mission :
 
 | Mission | Ce que fait l'élève |

@@ -23,27 +23,34 @@
     };
   }
 
-  function gris(v) {
+  // teinte : [r, g, b] — couleur des zones claires (schémas : origine maternelle ou paternelle)
+  function gris(v, teinte) {
     const g = Math.max(0, Math.min(255, Math.round(v)));
-    return `rgb(${g},${g},${g})`;
+    if (!teinte) return `rgb(${g},${g},${g})`;
+    const c = teinte.map((t) => Math.round((g * t) / 255));
+    return `rgb(${c[0]},${c[1]},${c[2]})`;
   }
 
-  /* Renvoie { svg, w, h, centro } : le texte SVG, ses dimensions en px
-   * et la hauteur du centromère (utile pour aligner un caryogramme). */
+  /* Renvoie { svg, w, h, centro, pad, L } : le texte SVG, ses dimensions en px,
+   * la hauteur du centromère, la marge et la longueur utile.
+   * Options : modele (schéma net, sans bruit ni courbure), une (une seule
+   * chromatide : chromosome non dupliqué), ecart (fente entre chromatides),
+   * teinte ([r, g, b]), echelle (multiplie la taille). */
   function dessiner(classe, graine, options) {
-    const opt = Object.assign({ modele: false }, options);
+    const opt = Object.assign({ modele: false, une: false, echelle: 1 }, options);
+    const teinte = opt.teinte || null;
     const d = window.BANDES[classe];
     const r = aleatoire(graine);
     const varLong = opt.modele ? 1 : 0.94 + r() * 0.12;
-    const L = d.mb * PX_PAR_MB * varLong;
-    const cw = opt.modele ? 8.5 : 8.3 + r() * 1.2; // largeur d'une chromatide
-    const ecart = opt.modele ? 0 : 0.9; // fente entre chromatides
+    const L = d.mb * PX_PAR_MB * varLong * opt.echelle;
+    const cw = (opt.modele ? 8.5 : 8.3 + r() * 1.2) * Math.sqrt(opt.echelle); // largeur d'une chromatide
+    const ecart = opt.ecart != null ? opt.ecart : opt.modele ? 0 : 0.9; // fente entre chromatides
     const pad = 3;
     // légère courbure (les chromosomes réels sont rarement tout droits)
     const courbe = opt.modele ? 0 : (r() - 0.5) * Math.min(10, L / 12);
     const courbe2 = opt.modele ? 0 : (r() - 0.5) * Math.min(4, L / 30);
     const marge = Math.ceil(Math.abs(courbe) + Math.abs(courbe2));
-    const W = Math.ceil(2 * cw + ecart + 2 * pad + 2 + 2 * marge);
+    const W = Math.ceil((opt.une ? cw * 1.15 : 2 * cw + ecart) + 2 * pad + 2 + 2 * marge);
     const H = Math.ceil(L + 2 * pad);
     const cx = W / 2;
     const yc = pad + d.centro * L;
@@ -87,9 +94,22 @@
       return "M" + ext.join("L") + "L" + int.reverse().join("L") + "Z";
     }
 
+    // chromosome non dupliqué : une seule chromatide, centrée
+    function chromatideSeule() {
+      const g = [];
+      const dr = [];
+      for (let y = pad; y <= pad + L + 0.01; y += 1) {
+        const pince = 1.8 * Math.exp(-Math.pow((y - yc) / 3.5, 2));
+        const demi = Math.max(0, (largeur(y) * 1.15) / 2 - pince);
+        g.push(`${(cx + axe(y) - demi).toFixed(1)},${y.toFixed(1)}`);
+        dr.push(`${(cx + axe(y) + demi).toFixed(1)},${y.toFixed(1)}`);
+      }
+      return "M" + g.join("L") + "L" + dr.reverse().join("L") + "Z";
+    }
+
     const contraste = opt.modele ? 1 : 0.88 + r() * 0.2;
     const clair = opt.modele ? 232 : 222 + r() * 10;
-    let bandes = `<rect x="0" y="0" width="${W}" height="${H}" fill="${gris(140)}"/>`;
+    let bandes = `<rect x="0" y="0" width="${W}" height="${H}" fill="${gris(140, teinte)}"/>`;
     for (const b of d.bandes) {
       const y0 = pad + b[0] * L;
       const y1 = pad + b[1] * L;
@@ -99,10 +119,10 @@
       const a0 = cx + axe(y0);
       const a1 = cx + axe(y1);
       const m = W;
-      bandes += `<path d="M${(a0 - m).toFixed(1)},${y0.toFixed(2)}H${(a0 + m).toFixed(1)}L${(a1 + m).toFixed(1)},${(y1 + 0.3).toFixed(2)}H${(a1 - m).toFixed(1)}Z" fill="${gris(v)}"/>`;
+      bandes += `<path d="M${(a0 - m).toFixed(1)},${y0.toFixed(2)}H${(a0 + m).toFixed(1)}L${(a1 + m).toFixed(1)},${(y1 + 0.3).toFixed(2)}H${(a1 - m).toFixed(1)}Z" fill="${gris(v, teinte)}"/>`;
     }
 
-    const id = "c" + (graine >>> 0).toString(36) + classe;
+    const id = "c" + (graine >>> 0).toString(36) + classe + (opt.une ? "u" : "") + Math.floor(Math.random() * 1e9).toString(36);
     const graineBruit = Math.floor(r() * 1000);
     const filtre = opt.modele ? "" : `
       <filter id="f${id}" x="-20%" y="-5%" width="140%" height="110%">
@@ -114,11 +134,18 @@
       </filter>`;
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
       <defs>
-        <clipPath id="k${id}"><path d="${chromatide(-1, 0)}"/><path d="${chromatide(1, 1)}"/></clipPath>${filtre}
+        <clipPath id="k${id}">${opt.une ? `<path d="${chromatideSeule()}"/>` : `<path d="${chromatide(-1, 0)}"/><path d="${chromatide(1, 1)}"/>`}</clipPath>${filtre}
       </defs>
       <g ${opt.modele ? "" : `filter="url(#f${id})"`}><g clip-path="url(#k${id})">${bandes}</g></g>
     </svg>`;
-    return { svg, w: W, h: H, centro: yc };
+    return { svg, w: W, h: H, centro: yc, pad, L };
+  }
+
+  /* Position (fraction de la longueur, depuis le haut du bras court) du
+   * milieu d'une bande, ex. locus("9", "q34.2") pour le gène ABO. */
+  function locus(classe, nomBande) {
+    const b = window.BANDES[classe].bandes.find((x) => x[3] === nomBande);
+    return b ? (b[0] + b[1]) / 2 : null;
   }
 
   // convertit le SVG en URL d'image : le navigateur le dessine une seule fois
@@ -126,5 +153,5 @@
     return URL.createObjectURL(new Blob([svg], { type: "image/svg+xml" }));
   }
 
-  window.Chromosome = { dessiner, versURL, aleatoire, PX_PAR_MB };
+  window.Chromosome = { dessiner, versURL, aleatoire, locus, PX_PAR_MB };
 })();

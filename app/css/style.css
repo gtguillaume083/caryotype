@@ -67,6 +67,19 @@ small { color: var(--texte-doux); }
 }
 .bascule label:has(input:checked) { border-color: var(--primaire); background: var(--primaire-clair); }
 .pied-accueil { color: var(--texte-doux); }
+.carte-parcours {
+  display: flex; flex-direction: column; gap: 6px; text-decoration: none;
+  background: linear-gradient(135deg, #1d5f8a, #3b7fae); color: #fff;
+  border-radius: 16px; padding: 22px 24px; margin-bottom: 30px;
+  box-shadow: 0 6px 20px rgb(29 95 138 / 25%); transition: transform .15s, box-shadow .15s;
+}
+.carte-parcours:hover { transform: translateY(-2px); box-shadow: 0 10px 26px rgb(29 95 138 / 30%); }
+.cp-titre { font-size: 1.5rem; font-weight: 800; }
+.cp-texte { opacity: .95; max-width: 760px; }
+.cp-action { align-self: flex-start; margin-top: 6px; background: #fff; color: #1d5f8a; font-weight: 700; border-radius: 8px; padding: 8px 14px; }
+.titre-atelier { font-size: 1.3rem; color: var(--primaire); margin-bottom: 12px; }
+#accueil h3 { font-size: 1.05rem; margin: 0 0 10px; }
+#retour-parcours { text-decoration: none; display: inline-flex; align-items: center; }
 
 /* ---------- barre de l'activité ---------- */
 .barre { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 8px; }

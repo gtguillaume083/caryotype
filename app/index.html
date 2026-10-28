@@ -6,7 +6,7 @@
   <title>Caryotype</title>
   <meta name="description" content="Reconstituer et analyser un caryotype humain : classement des chromosomes, chromosomes sexuels, anomalies du nombre.">
   <link rel="icon" href="img/icone.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="css/style.css?v=2">
+  <link rel="stylesheet" href="css/style.css?v=3">
 </head>
 <body>
 
@@ -20,8 +20,23 @@
     </div>
   </header>
 
+  <a class="carte-parcours" href="parcours.html">
+    <span class="cp-titre">Comprendre la génétique</span>
+    <span class="cp-texte">Parcours guidé : de l'ADN aux chromosomes, gènes et allèles, mutations, mitose, méiose, fécondation, trisomie 21. Avec une trace écrite complète.</span>
+    <span class="cp-action">Commencer le parcours →</span>
+  </a>
+
+  <h2 class="titre-atelier">Atelier caryotype</h2>
   <section>
-    <h2>1. Choisis ta mission</h2>
+    <h3>1. Choisis les chromosomes</h3>
+    <div class="bascule" role="radiogroup" aria-label="Type de chromosomes">
+      <label><input type="radio" name="type" value="dessin" checked> Chromosomes dessinés <small>(caryotypes illimités)</small></label>
+      <label><input type="radio" name="type" value="photo"> Photos réelles <small>(vrais caryotypes)</small></label>
+    </div>
+  </section>
+
+  <section>
+    <h3>2. Choisis ta mission</h3>
     <div class="cartes" id="choix-activite">
       <button class="carte" data-activite="classer">
         <span class="carte-titre">Reconstituer un caryotype</span>
@@ -42,14 +57,6 @@
     </div>
   </section>
 
-  <section>
-    <h2>2. Choisis les chromosomes</h2>
-    <div class="bascule" role="radiogroup" aria-label="Type de chromosomes">
-      <label><input type="radio" name="type" value="dessin" checked> Chromosomes dessinés <small>(caryotypes illimités)</small></label>
-      <label><input type="radio" name="type" value="photo"> Photos réelles <small>(vrais caryotypes)</small></label>
-    </div>
-  </section>
-
   <p class="pied-accueil">
     <button class="lien" id="ouvrir-prof">Espace enseignant</button> ·
     <button class="lien" id="ouvrir-credits">Crédits et licences</button>
@@ -59,6 +66,7 @@
 <!-- ============ ACTIVITÉ ============ -->
 <main id="activite" class="page" hidden>
   <header class="barre">
+    <a class="btn" id="retour-parcours" hidden>← Retour au parcours</a>
     <button class="btn-icone" id="retour" title="Retour à l'accueil" aria-label="Retour à l'accueil">
       <svg viewBox="0 0 24 24" width="22" height="22"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </button>
@@ -193,10 +201,10 @@
   </form>
 </dialog>
 
-<script src="js/bandes.js?v=2"></script>
-<script src="donnees/chromosomes.js?v=2"></script>
-<script src="js/chromosome.js?v=2"></script>
-<script src="js/cas.js?v=2"></script>
-<script src="js/app.js?v=2"></script>
+<script src="js/bandes.js?v=3"></script>
+<script src="donnees/chromosomes.js?v=3"></script>
+<script src="js/chromosome.js?v=3"></script>
+<script src="js/cas.js?v=3"></script>
+<script src="js/app.js?v=3"></script>
 </body>
 </html>

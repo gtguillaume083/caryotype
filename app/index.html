@@ -6,66 +6,91 @@
   <title>Caryotype</title>
   <meta name="description" content="Reconstituer et analyser un caryotype humain : classement des chromosomes, chromosomes sexuels, anomalies du nombre.">
   <link rel="icon" href="img/icone.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="css/style.css?v=14">
+  <link rel="preload" href="polices/lexend.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/style.css?v=15">
 </head>
 <body>
 
 <!-- ============ ACCUEIL ============ -->
 <main id="accueil" class="page">
-  <header class="entete-accueil">
-    <img src="img/icone.svg" alt="" width="56" height="56">
-    <div>
-      <h1>Caryotype</h1>
-      <p>Classe les chromosomes d'une cellule et analyse le caryotype obtenu.</p>
+  <header class="hero">
+    <div class="hero-texte">
+      <div class="hero-marque"><img src="img/icone.svg" alt="" width="44" height="44"><span>Caryotype</span></div>
+      <h1>Explore les chromosomes humains</h1>
+      <p>Comprends la génétique pas à pas, puis reconstitue et analyse des caryotypes, comme au laboratoire.</p>
+      <div class="hero-puces"><span>SVT · cycle 4</span><span>Gratuit et sans compte</span><span>Ordinateur, tablette, téléphone</span></div>
     </div>
+    <div class="hero-visuel" id="hero-visuel" aria-hidden="true"></div>
   </header>
 
   <div class="bandeau-prof partie-prof">
-    <p><b>Vous êtes enseignant ?</b> Préparez une séance en quelques clics : vous obtenez un lien à donner à vos élèves, puis vous corrigez leur travail avec votre clé.</p>
-    <button class="btn btn-principal" id="ouvrir-prof-haut">Préparer une séance →</button>
+    <span class="bp-icone" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24"><path d="M3 9l9-5 9 5-9 5-9-5z M7 11.2V16c0 1.5 2.2 3 5 3s5-1.5 5-3v-4.8 M21 9v6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    <p><b>Vous êtes enseignant ?</b> Préparez une séance en quelques clics : un lien pour vos élèves, puis la correction avec votre clé.</p>
+    <button class="btn btn-principal" id="ouvrir-prof-haut">Préparer une séance</button>
   </div>
 
-  <a class="carte-parcours" href="parcours.html">
-    <span class="cp-titre">Comprendre la génétique</span>
-    <span class="cp-texte">Parcours guidé : de l'ADN aux chromosomes, gènes et allèles, mutations, mitose, méiose, fécondation, trisomie 21. Avec une trace écrite complète.</span>
-    <span class="cp-action">Commencer le parcours →</span>
-  </a>
-
-  <h2 class="titre-atelier">Atelier caryotype</h2>
-  <section>
-    <h3>1. Choisis les chromosomes</h3>
-    <div class="bascule" role="radiogroup" aria-label="Type de chromosomes">
-      <label><input type="radio" name="type" value="dessin" checked> Chromosomes dessinés <small>(caryotypes illimités)</small></label>
-      <label><input type="radio" name="type" value="photo"> Photos réelles <small>(vrais caryotypes)</small></label>
-    </div>
+  <section class="entrees" aria-label="Choisir une activité">
+    <a class="entree entree-parcours" href="parcours.html">
+      <span class="entree-icone" aria-hidden="true"><svg viewBox="0 0 24 24" width="28" height="28"><path d="M4 19.5V5a2 2 0 0 1 2-2h13v15H6a2 2 0 0 0-2 2zm0 0A2 2 0 0 0 6 21h13 M9 7h6 M9 11h4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      <span class="entree-sur">Parcours guidé</span>
+      <span class="entree-titre">Comprendre la génétique</span>
+      <span class="entree-texte">De l'ADN aux chromosomes, gènes et allèles, mutations, mitose, méiose, fécondation et trisomie 21. Avec des expériences et une trace écrite.</span>
+      <span class="entree-progres" id="progres-parcours"><span class="barre-progres"><span></span></span><span class="progres-texte">8 chapitres</span></span>
+      <span class="entree-action" id="action-parcours">Commencer le parcours <span aria-hidden="true">→</span></span>
+    </a>
+    <a class="entree entree-atelier" href="#atelier">
+      <span class="entree-icone" aria-hidden="true"><svg viewBox="0 0 24 24" width="28" height="28"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18h8"/><path d="M3 22h18"/><path d="M14 22a7 7 0 1 0 0-14h-1"/><path d="M9 14h2"/><path d="M9 12a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2Z"/><path d="M12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3"/></g></svg></span>
+      <span class="entree-sur">Atelier</span>
+      <span class="entree-titre">Atelier caryotype</span>
+      <span class="entree-texte">Range les chromosomes d'une cellule par paires, compte-les et repère les anomalies. Chromosomes dessinés ou vraies photos.</span>
+      <span class="entree-progres"><span class="progres-texte">4 missions, du plus simple au plus complet</span></span>
+      <span class="entree-action">Choisir une mission <span aria-hidden="true">↓</span></span>
+    </a>
   </section>
 
-  <section>
-    <h3>2. Choisis ta mission</h3>
+  <section id="atelier" class="atelier">
+    <div class="atelier-entete">
+      <h2>Atelier caryotype</h2>
+      <div class="segment" role="radiogroup" aria-label="Type de chromosomes">
+        <label><input type="radio" name="type" value="dessin" checked><span>Chromosomes dessinés</span></label>
+        <label><input type="radio" name="type" value="photo"><span>Photos réelles</span></label>
+      </div>
+    </div>
+    <p class="atelier-aide" id="aide-type">Dessinés : un nouveau caryotype à chaque fois. Photos : de vrais caryotypes photographiés au microscope (images libres).</p>
+
     <div class="cartes" id="choix-activite">
       <button class="carte" data-activite="classer">
+        <span class="carte-haut"><span class="carte-icone ic-1" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24"><path d="M5 4v16 M8 4v16 M14 7v13 M17 7v13 M20 11v9 M11 11v9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span><span class="niveau">Pour commencer</span></span>
         <span class="carte-titre">Reconstituer un caryotype</span>
-        <span>Range les chromosomes par paires, du plus grand au plus petit.</span>
+        <span class="carte-texte">Range les chromosomes par paires, du plus grand au plus petit.</span>
+        <span class="carte-go" aria-hidden="true">Commencer →</span>
       </button>
       <button class="carte" data-activite="sexe">
+        <span class="carte-haut"><span class="carte-icone ic-2" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24"><path d="M3 6l6 12 M9 6l-6 12 M14 6l3.5 6 3.5-6 M17.5 12v6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="niveau">Facile</span></span>
         <span class="carte-titre">Les chromosomes sexuels</span>
-        <span>Classe les chromosomes puis compte les chromosomes X et Y.</span>
+        <span class="carte-texte">Classe les chromosomes puis compte les chromosomes X et Y.</span>
+        <span class="carte-go" aria-hidden="true">Commencer →</span>
       </button>
       <button class="carte" data-activite="anomalie">
+        <span class="carte-haut"><span class="carte-icone ic-3" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M15.5 15.5L21 21 M10.5 7.5v4 M10.5 14v.01" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span><span class="niveau">Intermédiaire</span></span>
         <span class="carte-titre">Rechercher une anomalie</span>
-        <span>Compte les chromosomes et repère s'il en manque ou s'il y en a un en trop.</span>
+        <span class="carte-texte">Compte les chromosomes et repère s'il en manque ou s'il y en a un en trop.</span>
+        <span class="carte-go" aria-hidden="true">Commencer →</span>
       </button>
       <button class="carte" data-activite="complet">
+        <span class="carte-haut"><span class="carte-icone ic-4" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24"><path d="M9 4h6v3H9z M7 5H5v16h14V5h-2 M8.5 13.5l2.5 2.5 4.5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="niveau">Expert</span></span>
         <span class="carte-titre">Analyse complète</span>
-        <span>Chromosomes sexuels, anomalie et formule chromosomique (ex. 46,XY).</span>
+        <span class="carte-texte">Chromosomes sexuels, anomalie et formule chromosomique (ex. 46,XY).</span>
+        <span class="carte-go" aria-hidden="true">Commencer →</span>
       </button>
     </div>
   </section>
 
-  <p class="pied-accueil">
+  <footer class="pied-accueil">
     <span class="partie-prof"><button class="lien" id="ouvrir-prof">Espace enseignant</button> ·</span>
-    <button class="lien" id="ouvrir-credits">Crédits et licences</button>
-  </p>
+    <button class="lien" id="ouvrir-credits">Crédits et licences</button> ·
+    <span>Logiciel libre (GPL v3)</span>
+  </footer>
 </main>
 
 <!-- ============ ACTIVITÉ ============ -->
@@ -79,12 +104,14 @@
       <h1 id="titre-activite">Reconstituer un caryotype</h1>
       <span id="code-cas" class="code"></span>
     </div>
-    <label class="eleve">Nom : <input id="nom-eleve" type="text" autocomplete="off" placeholder="Prénom Nom, classe"></label>
+    <label class="eleve">Nom <input id="nom-eleve" type="text" autocomplete="off" placeholder="Prénom Nom, classe"></label>
     <div class="outils">
-      <button id="zoom-moins" class="btn-icone" title="Rapetisser" aria-label="Rapetisser">−</button>
-      <button id="zoom-plus" class="btn-icone" title="Agrandir" aria-label="Agrandir">+</button>
-      <button id="btn-aide" class="btn">Aide</button>
-      <button id="btn-imprimer" class="btn">Imprimer</button>
+      <div class="zoom-groupe" role="group" aria-label="Taille des chromosomes">
+        <button id="zoom-moins" class="btn-icone" title="Rapetisser" aria-label="Rapetisser">−</button>
+        <button id="zoom-plus" class="btn-icone" title="Agrandir" aria-label="Agrandir">+</button>
+      </div>
+      <button id="btn-aide" class="btn" title="Aide"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M9.5 9.3a2.6 2.6 0 0 1 5 .9c0 1.7-2.5 2.2-2.5 3.8 M12 17v.01" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span class="txt">Aide</span></button>
+      <button id="btn-imprimer" class="btn" title="Imprimer"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M7 9V3h10v6 M7 17H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2 M7 14h10v7H7z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg><span class="txt">Imprimer</span></button>
     </div>
   </header>
 
@@ -227,16 +254,17 @@
       <li><b>Photos de caryotypes</b> (Wikimedia Commons), chromosomes découpés et détourés :
         <ul id="liste-credits"></ul>
       </li>
+      <li><b>Police</b> Lexend (SIL Open Font License) ; icône du microscope : Lucide (licence ISC).</li>
       <li>Le caryotype photo « 46,XX » est un montage pédagogique : deux chromosomes X ont été retirés d'un caryotype 48,XXXX.</li>
     </ul>
     <div class="dlg-actions"><button class="btn btn-principal">Fermer</button></div>
   </form>
 </dialog>
 
-<script src="js/bandes.js?v=14"></script>
-<script src="donnees/chromosomes.js?v=14"></script>
-<script src="js/chromosome.js?v=14"></script>
-<script src="js/cas.js?v=14"></script>
-<script src="js/app.js?v=14"></script>
+<script src="js/bandes.js?v=15"></script>
+<script src="donnees/chromosomes.js?v=15"></script>
+<script src="js/chromosome.js?v=15"></script>
+<script src="js/cas.js?v=15"></script>
+<script src="js/app.js?v=15"></script>
 </body>
 </html>

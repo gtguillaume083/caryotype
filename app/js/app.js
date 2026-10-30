@@ -915,9 +915,47 @@
     window.print();
   }
 
+  /* ---------- accueil : illustration et progression du parcours ---------- */
+  function decorerAccueil() {
+    const visuel = $("#hero-visuel");
+    if (visuel && !visuel.childElementCount) {
+      const paires = [["1", "1"], ["5", "5"], ["9", "9"], ["13", "13"], ["18", "18"], ["21", "21"], ["X", "Y"]];
+      paires.forEach(([a, b], k) => {
+        const p = document.createElement("div");
+        p.className = "paire";
+        const ligne = document.createElement("div");
+        [a, b].forEach((c, i) => {
+          const d = Chromosome.dessiner(c, 40 + k * 7 + i, { echelle: 0.95 });
+          const img = document.createElement("img");
+          img.src = Chromosome.versURL(d.svg);
+          img.width = d.w;
+          img.height = d.h;
+          img.style.setProperty("--h", d.h);
+          img.alt = "";
+          ligne.append(img);
+        });
+        const nom = document.createElement("span");
+        nom.textContent = a === b ? a : a + " " + b;
+        p.append(ligne, nom);
+        visuel.append(p);
+      });
+    }
+    // progression du parcours guidé (gardée par parcours.js)
+    const progres = memoire.lire("parcours", {}) || {};
+    const faits = Object.values(progres).filter(Boolean).length;
+    const total = 8;
+    const zone = $("#progres-parcours");
+    if (zone) {
+      zone.querySelector(".barre-progres > span").style.width = (100 * faits) / total + "%";
+      zone.querySelector(".progres-texte").textContent = faits ? `${faits} / ${total} chapitres réussis` : `${total} chapitres et une trace écrite`;
+      $("#action-parcours").firstChild.textContent = faits >= total ? "Revoir le parcours " : faits ? "Continuer le parcours " : "Commencer le parcours ";
+    }
+  }
+
   /* ---------- branchements ---------- */
   function init() {
     activerGlisser();
+    decorerAccueil();
     document.querySelectorAll("#choix-activite .carte").forEach((b) =>
       b.addEventListener("click", () => demarrer(configLibre(b.dataset.activite))));
     const typeMemo = memoire.lire("type", "dessin");

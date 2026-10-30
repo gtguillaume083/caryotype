@@ -82,6 +82,8 @@ Pour ajouter une photo de caryogramme : la placer dans `outils/sources/karyogram
 ## Licences
 
 - Code : [GNU GPL v3](LICENSE).
+- Police Lexend : The Lexend Project Authors, [SIL Open Font License 1.1](app/polices/OFL.txt), hébergée avec l'application (aucun appel à un serveur extérieur).
+- Icône du microscope : [Lucide](https://lucide.dev), licence ISC.
 - Bandes chromosomiques : UCSC Genome Browser, GRCh38/hg38 `cytoBand`, domaine public.
 - Photos de caryotypes et chromosomes découpés qui en sont tirés : licence de chaque image d'origine.
   - 46,XY : National Human Genome Research Institute (NHGRI), domaine public.

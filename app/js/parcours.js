@@ -1385,8 +1385,11 @@
   function rendreAccueil(main) {
     const premier = CHAPITRES.find((c) => !progres[c.id]) || CHAPITRES[0];
     main.innerHTML = `<article class="chap accueil-parcours">
-      <h1>Comprendre la génétique</h1>
-      <p class="intro">Pourquoi ressemble-t-on à ses parents tout en étant unique ? Ce parcours t'emmène de l'organisme jusqu'à l'ADN, puis de la formation des gamètes jusqu'à la naissance d'un nouvel individu.</p>
+      <header class="p-hero">
+        <h1>Comprendre la génétique</h1>
+        <p class="intro">Pourquoi ressemble-t-on à ses parents tout en étant unique ? Ce parcours t'emmène de l'organisme jusqu'à l'ADN, puis de la formation des gamètes jusqu'à la naissance d'un nouvel individu.</p>
+        <div class="commandes"><a class="btn btn-principal btn-grand" href="#${premier.id}">${progres[CHAPITRES[0].id] ? "Continuer" : "Commencer"} →</a></div>
+      </header>
       <div class="mode-emploi">
         <div><span class="pastille">1</span><b>Je découvre</b><br>Un texte court pour comprendre.</div>
         <div><span class="pastille">2</span><b>J'expérimente</b><br>Je manipule et j'observe.</div>
@@ -1394,9 +1397,8 @@
         <div><span class="pastille">4</span><b>Je retiens</b><br>L'essentiel à savoir.</div>
       </div>
       <p>À la fin, la <b>trace écrite</b> reprend tout le parcours. Tu peux avancer à ton rythme : ta progression est gardée sur cet appareil.</p>
-      <div class="commandes"><a class="btn btn-principal btn-grand" href="#${premier.id}">${progres[CHAPITRES[0].id] ? "Continuer" : "Commencer"} →</a></div>
-      <ol class="liste-chapitres">${CHAPITRES.map((c, i) => `<li><a href="#${c.id}">${i + 1}. ${c.titre}</a>${progres[c.id] ? " ✓" : ""}</li>`).join("")}
-        <li><a href="#trace">La trace écrite</a></li></ol>
+      <ol class="liste-chapitres">${CHAPITRES.map((c, i) => `<li><a href="#${c.id}" class="${progres[c.id] ? "fait" : ""}"><span class="s-num">${progres[c.id] ? "✓" : i + 1}</span>${c.titre}</a></li>`).join("")}
+        <li><a href="#trace"><span class="s-num">★</span>La trace écrite</a></li></ol>
     </article>`;
   }
 

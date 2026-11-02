@@ -234,6 +234,12 @@
       img.src = c.url;
       img.alt = "";
       img.draggable = false;
+      // le serveur refuse parfois une image quand toute la classe charge en même temps : on réessaie
+      let essais = 0;
+      img.addEventListener("error", () => {
+        if (++essais > 5) return;
+        setTimeout(() => { img.src = `${c.url}?r=${essais}`; }, 400 * essais + Math.random() * 600);
+      });
       el.append(img);
     }
     return el;

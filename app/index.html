@@ -7,7 +7,7 @@
   <meta name="description" content="Reconstituer et analyser un caryotype humain : classement des chromosomes, chromosomes sexuels, anomalies du nombre.">
   <link rel="icon" href="img/icone.svg" type="image/svg+xml">
   <link rel="preload" href="polices/lexend.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="css/style.css?v=15">
+  <link rel="stylesheet" href="css/style.css?v=16">
 </head>
 <body>
 
@@ -138,9 +138,8 @@
     <button id="btn-nouveau" class="btn">Nouveau caryotype</button>
   </div>
   <div id="rendu" class="rendu" hidden>
-    <p><b>Quand tu as fini</b> : copie ton code de rendu et colle-le là où ton professeur te l'a demandé (devoir Pronote, ENT…).</p>
-    <button id="btn-rendu" class="btn btn-principal">Copier mon code de rendu</button>
-    <textarea id="rendu-code" rows="3" readonly hidden aria-label="Mon code de rendu"></textarea>
+    <p><b>Quand tu as fini</b> : clique sur « Mon bilan », télécharge ton bilan et range le fichier là où ton professeur te l'a demandé (ou montre-lui l'écran).</p>
+    <button id="btn-rendu" class="btn btn-principal">Mon bilan</button>
   </div>
   <div id="bilan" class="bilan" role="status" aria-live="polite" hidden></div>
 
@@ -167,6 +166,23 @@
   </form>
 </dialog>
 
+<!-- ============ BILAN DE L'ÉLÈVE ============ -->
+<dialog id="dlg-rendu">
+  <form method="dialog" class="dlg">
+    <h2>Mon bilan</h2>
+    <div class="ligne"><input type="text" id="r-nom" placeholder="Prénom et nom" autocomplete="off"><input type="text" id="r-classe" placeholder="Classe (ex. 3e2)" autocomplete="off"></div>
+    <div class="dlg-actions" style="justify-content:flex-start"><button class="btn btn-principal" type="button" id="r-voir">Voir mon bilan</button></div>
+    <p class="note" id="r-etat" aria-live="polite"></p>
+    <div id="r-bilan"></div>
+    <div class="dlg-actions" id="r-actions" hidden>
+      <button class="btn btn-principal" type="button" id="r-telecharger">Télécharger mon bilan</button>
+      <button class="btn" type="button" id="r-copier">Copier le code</button>
+    </div>
+    <p class="note" id="r-aide" hidden>Enregistre le fichier là où ton professeur te l'a demandé (dossier de l'ordinateur, ENT…), ou montre-lui cet écran.</p>
+    <div class="dlg-actions"><button class="btn">Fermer</button></div>
+  </form>
+</dialog>
+
 <!-- ============ ESPACE ENSEIGNANT ============ -->
 <dialog id="dlg-prof">
   <form method="dialog" class="dlg" id="form-prof">
@@ -174,6 +190,7 @@
     <ol class="guide-prof">
       <li><b>Réglez</b> l'activité (étapes 1 à 4 ci-dessous), puis copiez le lien (étape 5).</li>
       <li><b>Donnez le lien</b> aux élèves (ENT, Pronote, QR code…). Ils arrivent directement sur l'activité, sans espace enseignant, sans compte à créer. Rien n'est enregistré en ligne.</li>
+      <li><b>Récupérez les bilans</b> : chaque élève télécharge un fichier « Mon bilan » ; glissez-les tous en bas de cette fenêtre.</li>
       <li><b>Corrigez</b> : chaque élève a un code de caryotype (en haut de son écran et sur sa feuille imprimée). Avec ce code et votre clé, vous ouvrez sa solution (en bas de cette fenêtre).</li>
     </ol>
 
@@ -221,14 +238,19 @@
     </fieldset>
 
     <fieldset>
-      <legend>Après la séance : lire les codes de rendu</legend>
-      <p class="note">Chaque élève copie son « code de rendu » (bouton en bas de son activité) et vous l'envoie. Collez ici un ou plusieurs codes, tels quels, même mélangés à d'autre texte : le score est recalculé à partir du travail de l'élève. « Voir » ouvre son caryotype tel qu'il l'a rendu. Un code modifié à la main est refusé.</p>
-      <textarea id="prof-rendus" rows="4" placeholder="R1.xxxxxxxx…" spellcheck="false"></textarea>
-      <div class="dlg-actions">
+      <legend>Après la séance : lire les bilans</legend>
+      <p class="note">En fin d'activité, chaque élève clique sur « Mon bilan » et télécharge un petit fichier dont le nom contient tout : nom, classe et code (ex. <code>Caryotype · Léa Martin · 3e2 · K7M2-9QXP-3TBA-WQ4R-ZZZZ</code>).</p>
+      <label class="depot" id="prof-depot"><input type="file" id="prof-fichiers" multiple accept=".html,.htm,text/html" hidden>
+        <b>Glissez ici les fichiers des élèves</b><span>ou cliquez pour les choisir (plusieurs à la fois)</span></label>
+      <p class="note">Sans fichier : tapez une ligne par élève, recopiée de son écran ou d'une photo (<code>Léa Martin ; 3e2 ; code</code>). Les accents et majuscules n'ont pas d'importance. Les anciens codes « R1. » sont aussi acceptés.</p>
+      <textarea id="prof-rendus" rows="3" placeholder="Prénom Nom ; classe ; code (une ligne par élève)" spellcheck="false"></textarea>
+      <div class="dlg-actions" style="justify-content:flex-start">
+        <button type="button" class="btn btn-principal" id="prof-lire">Ajouter ces lignes</button>
+        <button type="button" class="btn" id="prof-vider">Vider le tableau</button>
         <button type="button" class="btn" id="prof-copier-tableau" hidden>Copier le tableau (tableur)</button>
-        <button type="button" class="btn btn-principal" id="prof-lire">Lire les codes</button>
       </div>
       <div id="prof-tableau"></div>
+      <p class="note">« Voir » ouvre le caryotype de l'élève tel qu'il l'a rendu (fichiers seulement, avec la clé de correction du lien). Le code vérifie le nom, la classe et les résultats : une retouche ou une faute de frappe est signalée. Rien n'est envoyé en ligne.</p>
     </fieldset>
 
     <fieldset>
@@ -261,10 +283,10 @@
   </form>
 </dialog>
 
-<script src="js/bandes.js?v=15"></script>
-<script src="donnees/chromosomes.js?v=15"></script>
-<script src="js/chromosome.js?v=15"></script>
-<script src="js/cas.js?v=15"></script>
-<script src="js/app.js?v=15"></script>
+<script src="js/bandes.js?v=16"></script>
+<script src="donnees/chromosomes.js?v=16"></script>
+<script src="js/chromosome.js?v=16"></script>
+<script src="js/cas.js?v=16"></script>
+<script src="js/app.js?v=16"></script>
 </body>
 </html>

@@ -675,7 +675,6 @@
     $("#bilan").hidden = true;
     $("#btn-solution").hidden = true;
     $("#rendu").hidden = !conf.m || solution;
-    $("#rendu-code").hidden = true;
     construireQuestions();
     appliquerZoom();
     disposer(etat.chromos, graine);
@@ -869,39 +868,229 @@
       travail: { chromos, reponses, nom, essais, solutionVue: !!(f & 4) } };
   }
 
+  /* ---------- bilan de l'élève ----------
+   * « Mon bilan » résume le travail dans un code court de 20 caractères
+   * (ex. K7M2-9QXP-3TBA-WQ4R-ZZZZ) : mission, caryotype tiré, chromosomes bien
+   * placés, réponses justes ou fausses, vérifications, solution vue, date.
+   * Le nom et la classe restent en clair à côté du code, mais le code les
+   * vérifie : un nom changé ou un chiffre retouché le rend invalide.
+   * Le fichier téléchargé porte ce code comme nom et contient en plus le code
+   * de rendu complet (positions, justification), pour « Voir » le caryotype. */
+  const SEL_BILAN = "caryotype-bilan-svt";
+  const B32 = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"; // base 32 de Crockford : pas de I, L, O, U
+  const JOUR0 = Date.UTC(2026, 0, 1);
+  const QUESTIONS = ["sexuels", "nombre", "anomalie", "formule"];
+  const NOMS_Q = { sexuels: "X/Y", nombre: "nombre", anomalie: "anomalie", formule: "formule" };
+  // [champ, nombre de bits] : 75 bits + 25 bits de contrôle = 100 bits = 20 caractères
+  const CHAMPS = [["v", 4], ["jour", 12], ["cas", 5], ["act", 2], ["vue", 1], ["marque", 11],
+    ["justes", 6], ["total", 6], ["restants", 6], ["envers", 6], ["essais", 8], ["corr", 8]];
+  // nom et classe comparés sans accents, majuscules ni espaces (fichiers renommés, saisie à la main)
+  const simple = (s) => (s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  const echapper = (t) => String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+  function controle(nom, classe, n) {
+    let h = 0x811c9dc5;
+    for (const ch of SEL_BILAN + simple(nom) + "|" + simple(classe) + "|" + n.toString(36)) { h ^= ch.codePointAt(0); h = Math.imul(h, 0x01000193) >>> 0; }
+    return BigInt(h & 0x1ffffff);
+  }
+
+  // résumé du travail en cours (le même que celui que relit l'enseignant)
+  function resumeTravail() {
+    sauver();
+    let justes = 0, restants = 0, envers = 0;
+    for (const c of etat.chromos) {
+      if (c.lieu === "lame") { restants++; continue; }
+      if (c.lieu === c.classe) justes++;
+      if (c.inverse) envers++;
+    }
+    return { cas: etat.cas, activite: config.activite, solutionVue: etat.solutionVue, marque: config.m,
+      justes, total: etat.chromos.length, restants, envers, essais: etat.essais || 0,
+      corr: corrigerReponses(config.activite, etat.cas, etat.chromos.map((c) => c.classe), lireReponses()),
+      justif: (lireReponses().justif || "").trim() };
+  }
+
+  function codeCourt(nom, classe, r, date = new Date()) {
+    const v = { v: 1, jour: Math.floor((date - JOUR0) / 864e5), cas: Cas.LISTE.indexOf(r.cas), act: ACT.indexOf(r.activite),
+      vue: r.solutionVue ? 1 : 0, marque: parseInt(r.marque.toLowerCase(), 36), justes: r.justes, total: r.total,
+      restants: r.restants, envers: r.envers, essais: r.essais,
+      corr: QUESTIONS.reduce((t, q, i) => t | ((r.corr[q] === null ? 0 : r.corr[q] ? 1 : 2) << (2 * i)), 0) };
+    let n = 0n;
+    for (const [k, b] of CHAMPS) n = (n << BigInt(b)) | BigInt(Math.max(0, Math.min(2 ** b - 1, v[k] || 0)));
+    n = (n << 25n) | controle(nom, classe, n);
+    let s = "";
+    for (let i = 19; i >= 0; i--) s += B32[Number((n >> BigInt(5 * i)) & 31n)];
+    return s.match(/.{4}/g).join("-");
+  }
+
+  function lireCourt(nom, classe, code) {
+    const s = code.toUpperCase().replace(/[^0-9A-Z]/g, "").replace(/O/g, "0").replace(/[IL]/g, "1");
+    if (s.length !== 20) return null;
+    let n = 0n;
+    for (const ch of s) { const x = B32.indexOf(ch); if (x < 0) return null; n = (n << 5n) | BigInt(x); }
+    const corps = n >> 25n;
+    if (controle(nom, classe, corps) !== (n & 0x1ffffffn)) return null;
+    const v = {};
+    let reste = corps;
+    for (const [k, b] of [...CHAMPS].reverse()) { v[k] = Number(reste & BigInt(2 ** b - 1)); reste >>= BigInt(b); }
+    if (v.v !== 1 || !Cas.LISTE[v.cas]) return null;
+    const corr = {};
+    QUESTIONS.forEach((q, i) => { const x = (v.corr >> (2 * i)) & 3; corr[q] = x === 0 ? null : x === 1; });
+    return { n: nom, k: classe, date: new Date(JOUR0 + v.jour * 864e5), code: s.match(/.{4}/g).join("-"),
+      cas: Cas.LISTE[v.cas], activite: ACT[v.act], solutionVue: !!v.vue,
+      marque: v.marque.toString(36).toUpperCase().padStart(2, "0"),
+      justes: v.justes, total: v.total, restants: v.restants, envers: v.envers, essais: v.essais, corr, justif: "" };
+  }
+
+  /* lit une ligne « Caryotype · Prénom Nom · Classe · CODE » (nom de fichier, saisie, photo) */
+  function lireBilan(texte) {
+    const t = (texte || "").replace(/\.html?$/i, "").replace(/\s*\(\d+\)\s*$/, "").trim();
+    const r = t.match(/((?:[0-9A-Za-z]{4}[\s-]?){4}[0-9A-Za-z]{4})\s*$/);
+    if (!r) return null;
+    const morceaux = t.slice(0, r.index).split(/\s*[·;,\t_|]\s*|\s+-\s+/).map((x) => x.trim()).filter((x) => x && !/^caryotype$/i.test(x));
+    if (morceaux.length < 2) return null;
+    const classe = morceaux.pop();
+    return lireCourt(morceaux.join(" "), classe, r[1]);
+  }
+
+  const reponsesTexte = (corr) => QUESTIONS.filter((q) => corr[q] !== null)
+    .map((q) => `${NOMS_Q[q]} ${corr[q] ? "✓" : "✗"}`).join(", ") || "—";
+
+  /* contenu du bilan (boîte de l'élève et fichier téléchargé) ; dans les missions
+   * où l'élève doit compter, le nombre total de chromosomes n'est pas donné */
+  function bilanHtml(d) {
+    const pl = (n, mot) => `${n} ${mot}${n > 1 ? "s" : ""}`;
+    const faux = d.total - d.justes - d.restants;
+    const cache = d.activite === "anomalie" || d.activite === "complet";
+    let classement = d.justes === d.total ? "<b class=\"ok\">parfait ✓</b>"
+      : cache ? `${faux ? pl(faux, "chromosome") + " mal placé" + (faux > 1 ? "s" : "") : "aucun chromosome mal placé"}${d.restants ? ", il en reste sur la lame" : ""}`
+        : `${d.justes} / ${d.total} bien placés${d.restants ? `, ${d.restants} sur la lame` : ""}`;
+    if (d.envers) classement += `, ${d.envers} à l'envers`;
+    const ligne = (t, v) => `<tr><th>${t}</th><td>${v}</td></tr>`;
+    return `<div class="bil">
+      <p class="bil-qui"><b>${echapper(d.n)}</b> · ${echapper(d.k)} · ${d.date.toLocaleDateString("fr-FR")}</p>
+      <table class="bil-t"><tbody>${ligne("Mission", ACTIVITES[d.activite].titre)}${ligne("Classement", classement)}
+      ${ligne("Réponses", d.activite === "classer" ? "pas de question" : reponsesTexte(d.corr))}${ligne("Vérifications", d.essais + (d.essais >= 255 ? " ou +" : ""))}
+      ${ligne("Solution vue", d.solutionVue ? "oui" : "non")}${d.justif ? ligne("Justification", echapper(d.justif)) : ""}</tbody></table>
+      <p class="bil-code-titre">Mon code</p><p class="bil-code">${d.code}</p></div>`;
+  }
+  const CSS_BILAN = `.bil-qui{font-size:1.15rem;margin:0 0 10px}.bil-t{border-collapse:collapse;width:100%;margin:8px 0;font-size:.92rem}
+    .bil-t th,.bil-t td{border:1px solid #cbd3e1;padding:6px 10px;text-align:left;vertical-align:top}.bil-t th{background:#eef0ff;width:32%;font-weight:600}.bil .ok{color:#15803d}
+    .bil-code-titre{margin:12px 0 0;font-weight:600;color:#5a6479}.bil-code{font:700 1.6rem/1.2 ui-monospace,Consolas,monospace;letter-spacing:.06em;margin:4px 0;color:#3f37c9;word-break:break-all}`;
+
+  function nomFichier(d) {
+    const propre = (s) => s.replace(/[\\/:*?"<>|·;,_\t]/g, " ").replace(/\s+/g, " ").trim();
+    return `Caryotype · ${propre(d.n)} · ${propre(d.k) || "classe"} · ${d.code}.html`;
+  }
+  function fichierBilan(d, rendu) {
+    return `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="caryotype-bilan" content="${echapper(nomFichier(d).replace(/\.html$/, ""))}">
+<meta name="caryotype-rendu" content="${echapper(rendu)}">
+<title>Bilan · ${echapper(d.n)}</title><style>body{font:16px/1.5 system-ui,sans-serif;color:#161d2f;max-width:720px;margin:24px auto;padding:0 16px}h1{font-size:1.4rem;color:#3f37c9}${CSS_BILAN}</style></head>
+<body><h1>Caryotype : mon bilan</h1>${bilanHtml(d)}
+<p style="color:#5a6479;font-size:.85rem">Ce fichier a été créé par l'application Caryotype. Le code vérifie le nom, la classe et les résultats : s'il est modifié, il devient invalide.</p></body></html>`;
+  }
+
+  /* boîte « Mon bilan » */
+  let bilanEleve = null;
+  function ouvrirBilan() {
+    const dlg = $("#dlg-rendu");
+    const id = memoire.lire("eleve", null);
+    if (!$("#r-nom").value) {
+      // le champ « Nom » de l'activité contient souvent « Prénom Nom, classe »
+      const [n, k] = id ? [id.n, id.k] : (() => { const t = $("#nom-eleve").value.trim(); const i = t.lastIndexOf(","); return i > 0 ? [t.slice(0, i), t.slice(i + 1)] : [t, ""]; })();
+      $("#r-nom").value = (n || "").trim();
+      $("#r-classe").value = (k || "").trim();
+    }
+    $("#r-bilan").innerHTML = "";
+    $("#r-actions").hidden = $("#r-aide").hidden = true;
+    $("#r-etat").textContent = "";
+    if ($("#r-nom").value && $("#r-classe").value) voirBilan();
+    dlg.showModal();
+  }
+  function voirBilan() {
+    const n = $("#r-nom").value.trim();
+    const k = $("#r-classe").value.trim();
+    if (!n || !k) { $("#r-etat").textContent = "Écris ton prénom, ton nom et ta classe."; $(n ? "#r-classe" : "#r-nom").focus(); return; }
+    memoire.ecrire("eleve", { n, k });
+    if (!$("#nom-eleve").value.trim()) { $("#nom-eleve").value = `${n}, ${k}`; sauver(); }
+    const r = resumeTravail();
+    bilanEleve = Object.assign(lireCourt(n, k, codeCourt(n, k, r)), { justif: r.justif });
+    $("#r-bilan").innerHTML = bilanHtml(bilanEleve);
+    $("#r-actions").hidden = $("#r-aide").hidden = false;
+    $("#r-etat").textContent = "";
+  }
+  function telechargerBilan() {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([fichierBilan(bilanEleve, codeRendu())], { type: "text/html" }));
+    a.download = nomFichier(bilanEleve);
+    document.body.append(a);
+    a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+    $("#r-etat").textContent = "Fichier téléchargé ✓ (" + a.download + ")";
+  }
+
+  /* espace enseignant : fichiers déposés, lignes tapées ou anciens codes « R1. ».
+   * Un élève n'apparaît qu'une fois par mission et par caryotype (son bilan le plus récent). */
+  const bilans = new Map();
+  const refuses = [];
   let rendusLus = [];
   let tableauTSV = "";
-  function lireRendus() {
-    const cle = cleProf();
-    const codes = $("#prof-rendus").value.match(/R1\.[A-Za-z0-9_-]+/g) || [];
-    const zone = $("#prof-tableau");
-    rendusLus = [];
-    if (!codes.length) { zone.innerHTML = "<p class=\"note\">Aucun code de rendu trouvé (ils commencent par « R1. »).</p>"; return; }
-    const echap = (t) => String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-    const NOMS_Q = { sexuels: "X/Y", nombre: "nombre", anomalie: "anomalie", formule: "formule" };
-    const reponsesTexte = (corr) => Object.keys(NOMS_Q).filter((k) => corr[k] !== null)
-      .map((k) => `${NOMS_Q[k]} ${corr[k] ? "✓" : "✗"}`).join(", ") || "—";
-    const lignes = [];
-    const tsv = [["Nom", "Caryotype n°", "Mission", "Chromosomes bien placés", "Total", "Sur la lame", "À l'envers", "Réponses", "Vérifications", "Solution vue", "Justification"].join("\t")];
-    codes.forEach((code) => {
-      const d = lireRendu(code, cle);
-      if (d.erreur) {
-        lignes.push(`<tr class="rendu-erreur"><td colspan="8">Code refusé (${echap(d.erreur)}) : ${echap(code.slice(0, 18))}…</td></tr>`);
-        return;
+  function ajouterBilan(d) {
+    const cle = [simple(d.n), simple(d.k), d.activite, d.cas.id].join("|");
+    const avant = bilans.get(cle);
+    // à date égale, on garde le bilan le plus complet (fichier plutôt que ligne tapée)
+    const ecart = (d.date || 0) - (avant ? avant.date || 0 : 0);
+    if (!avant || ecart > 0 || (ecart === 0 && (d.travail || !avant.travail))) bilans.set(cle, d);
+  }
+  // ancien code de rendu complet, collé tel quel
+  function ajouterRendu(code) {
+    const d = lireRendu(code, cleProf());
+    if (d.erreur) { refuses.push(`${d.erreur} : ${code.slice(0, 18)}…`); return; }
+    ajouterBilan(Object.assign(d, { n: d.nom || "(sans nom)", k: "", date: null }));
+  }
+  function ajouterLigne(texte) {
+    const r1 = texte.match(/R1\.[A-Za-z0-9_-]+/g);
+    if (r1) { r1.forEach(ajouterRendu); return; }
+    const d = lireBilan(texte);
+    if (d) ajouterBilan(d); else refuses.push(texte);
+  }
+  async function lireFichiers(fichiers) {
+    for (const f of fichiers) {
+      const texte = await f.text().catch(() => "");
+      const meta = (nom) => { const r = texte.match(new RegExp(`<meta name="${nom}" content="([^"]+)"`)); return r ? r[1].replace(/&quot;/g, '"').replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&") : ""; };
+      // le nom du fichier suffit ; s'il a été renommé, le code est aussi rangé dans le fichier
+      const d = lireBilan(f.name) || lireBilan(meta("caryotype-bilan"));
+      if (!d) { refuses.push(f.name); continue; }
+      const rendu = meta("caryotype-rendu");
+      const complet = rendu && lireRendu(rendu, cleProf());
+      // le travail complet (pour « Voir ») n'est lisible qu'avec la clé de correction du lien
+      if (complet && !complet.erreur && complet.cas === d.cas && complet.activite === d.activite) {
+        Object.assign(d, { travail: complet.travail, codeCas: complet.codeCas, justif: complet.justif });
       }
-      const k = rendusLus.push(d) - 1;
+      ajouterBilan(d);
+    }
+    tableauBilans();
+  }
+  function tableauBilans() {
+    const zone = $("#prof-tableau");
+    rendusLus = [...bilans.values()].sort((a, b) => a.k.localeCompare(b.k, "fr") || a.n.localeCompare(b.n, "fr"));
+    const entete = ["Élève", "Classe", "Date", "Mission", "Caryotype", "Bien placés", "Total", "Sur la lame", "À l'envers", "Réponses", "Vérifications", "Solution vue", "Justification"];
+    const tsv = [entete.join("\t")];
+    const lignes = rendusLus.map((d, k) => {
       const titre = ACTIVITES[d.activite].titre;
-      lignes.push(`<tr><td>${echap(d.nom || "(sans nom)")}</td><td>${d.codeCas}-${d.marque}</td><td>${titre}</td>`
+      const date = d.date ? d.date.toLocaleDateString("fr-FR") : "–";
+      tsv.push([d.n, d.k, date, titre, d.cas.formule, d.justes, d.total, d.restants, d.envers, reponsesTexte(d.corr), d.essais,
+        d.solutionVue ? "oui" : "non", (d.justif || "").replace(/\s+/g, " ")].join("\t"));
+      return `<tr><td>${echapper(d.n)}</td><td>${echapper(d.k)}</td><td>${date}</td><td>${titre}</td><td>${d.cas.formule}</td>`
         + `<td><b>${d.justes}/${d.total}</b>${d.restants ? ` <small>(${d.restants} sur la lame)</small>` : ""}${d.envers ? ` <small>(${d.envers} à l'envers)</small>` : ""}</td>`
         + `<td>${reponsesTexte(d.corr)}</td><td>${d.essais}</td><td>${d.solutionVue ? "<b>oui</b>" : "non"}</td>`
-        + `<td><button type="button" class="btn" data-n="${k}">Voir</button></td></tr>`
-        + (d.justif ? `<tr class="rendu-justif"><td colspan="8">Justification : ${echap(d.justif)}</td></tr>` : ""));
-      tsv.push([d.nom, `${d.codeCas}-${d.marque}`, titre, d.justes, d.total, d.restants, d.envers,
-        reponsesTexte(d.corr), d.essais, d.solutionVue ? "oui" : "non", d.justif.replace(/\s+/g, " ")].join("\t"));
+        + `<td>${d.travail ? `<button type="button" class="btn" data-n="${k}">Voir</button>` : ""}</td></tr>`
+        + (d.justif ? `<tr class="rendu-justif"><td colspan="10">Justification : ${echapper(d.justif)}</td></tr>` : "");
     });
+    lignes.push(...refuses.map((t) => `<tr class="rendu-erreur"><td colspan="10">Illisible ou modifié : ${echapper(t.slice(0, 120))}</td></tr>`));
     tableauTSV = tsv.join("\n");
-    zone.innerHTML = `<div class="tableau-defile"><table class="tableau-rendus"><thead><tr><th>Nom</th><th>Caryotype</th><th>Mission</th>`
-      + `<th>Classement</th><th>Réponses</th><th>Vérif.</th><th>Solution vue</th><th></th></tr></thead><tbody>${lignes.join("")}</tbody></table></div>`;
+    zone.innerHTML = lignes.length ? `<p class="note"><b>${rendusLus.length} bilan${rendusLus.length > 1 ? "s" : ""}</b></p><div class="tableau-defile"><table class="tableau-rendus"><thead><tr><th>Élève</th><th>Classe</th><th>Date</th><th>Mission</th><th>Caryotype</th>`
+      + `<th>Classement</th><th>Réponses</th><th>Vérif.</th><th>Solution vue</th><th></th></tr></thead><tbody>${lignes.join("")}</tbody></table></div>` : "";
     $("#prof-copier-tableau").hidden = !rendusLus.length;
   }
 
@@ -1020,16 +1209,24 @@
       demarrer(Object.assign(configProf(), { m: lu.marque }), champ.value.trim().split("-")[0], cle);
     });
     $("#prof-code").addEventListener("input", () => $("#prof-code").setCustomValidity(""));
-    $("#btn-rendu").addEventListener("click", async () => {
-      const code = codeRendu();
-      const champ = $("#rendu-code");
-      champ.value = code;
-      champ.hidden = false;
-      try { await navigator.clipboard.writeText(code); $("#btn-rendu").textContent = "Code copié ✓ — colle-le dans ton devoir"; }
-      catch (e) { champ.select(); $("#btn-rendu").textContent = "Copie le code ci-dessous"; }
-      setTimeout(() => { $("#btn-rendu").textContent = "Copier mon code de rendu"; }, 4000);
+    $("#btn-rendu").addEventListener("click", ouvrirBilan);
+    $("#r-voir").addEventListener("click", voirBilan);
+    $("#r-telecharger").addEventListener("click", telechargerBilan);
+    $("#r-copier").addEventListener("click", async () => {
+      const texte = nomFichier(bilanEleve).replace(/\.html$/, "");
+      try { await navigator.clipboard.writeText(texte); $("#r-etat").textContent = "Copié ✓"; } catch (e) { $("#r-etat").textContent = texte; }
     });
-    $("#prof-lire").addEventListener("click", lireRendus);
+    $("#prof-lire").addEventListener("click", () => {
+      $("#prof-rendus").value.split(/\r?\n/).map((x) => x.trim()).filter(Boolean).forEach(ajouterLigne);
+      $("#prof-rendus").value = "";
+      tableauBilans();
+    });
+    $("#prof-vider").addEventListener("click", () => { bilans.clear(); refuses.length = 0; tableauBilans(); });
+    const depot = $("#prof-depot");
+    $("#prof-fichiers").addEventListener("change", (e) => { lireFichiers([...e.target.files]); e.target.value = ""; });
+    ["dragenter", "dragover"].forEach((t) => depot.addEventListener(t, (e) => { e.preventDefault(); depot.classList.add("survol"); }));
+    ["dragleave", "drop"].forEach((t) => depot.addEventListener(t, () => depot.classList.remove("survol")));
+    depot.addEventListener("drop", (e) => { e.preventDefault(); lireFichiers([...e.dataTransfer.files]); });
     $("#prof-copier-tableau").addEventListener("click", async () => {
       try { await navigator.clipboard.writeText(tableauTSV); $("#prof-copier-tableau").textContent = "Tableau copié ✓"; }
       catch (e) { /* presse-papiers indisponible */ }

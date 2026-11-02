@@ -397,3 +397,18 @@ input[type=checkbox], input[type=radio] { accent-color: var(--primaire); width: 
   .bilan { border: 1px solid #999; box-shadow: none; animation: none; }
   .q { background: none; }
 }
+
+/* bilan de l'élève et dépôt des fichiers */
+.depot { display: flex; flex-direction: column; align-items: center; gap: 2px; margin: 10px 0; padding: 18px; border: 2px dashed var(--bordure-forte); border-radius: var(--rayon); background: var(--surface); cursor: pointer; text-align: center; transition: background .15s, border-color .15s; }
+.depot:hover, .depot.survol { border-color: var(--primaire); background: var(--primaire-clair); }
+.depot span { color: var(--texte-doux); font-size: .9rem; }
+#dlg-rendu .ligne { display: flex; gap: 8px; flex-wrap: wrap; }
+#dlg-rendu .ligne input { flex: 1 1 180px; font: inherit; padding: 8px 10px; border: 1px solid var(--bordure-forte); border-radius: 10px; }
+#dlg-rendu .bil { background: var(--fond); border: 1px solid var(--bordure); border-radius: var(--rayon); padding: 12px 16px; }
+.bil-qui { font-size: 1.15rem; margin: 0 0 10px; }
+.bil-t { border-collapse: collapse; width: 100%; margin: 8px 0; font-size: .92rem; }
+.bil-t th, .bil-t td { border: 1px solid var(--bordure-forte); padding: 6px 10px; text-align: left; vertical-align: top; }
+.bil-t th { background: var(--primaire-clair); width: 32%; font-weight: 600; }
+.bil .ok { color: var(--juste); }
+.bil-code-titre { margin: 12px 0 0; font-weight: 600; color: var(--texte-doux); }
+.bil-code { font: 700 1.6rem/1.2 ui-monospace, Consolas, monospace; letter-spacing: .06em; margin: 4px 0; color: var(--primaire-fonce); word-break: break-all; }
